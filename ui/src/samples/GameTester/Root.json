@@ -1,0 +1,270 @@
+{
+  "name": "Root",
+  "variables": {
+    "totalPlayers": 2,
+    "mode": "Endpoint",
+    "endpoint": "",
+    "matchType": 1,
+    "stakesId": 1,
+    "tournamentId": 0,
+    "tableId": 0,
+    "tablePassword": "",
+    "longitude": 0,
+    "latitude": 0,
+    "webSocketUrl": ""
+  },
+  "nodes": [
+    {
+      "element": "AppFrame",
+      "slots": {
+        "top": [
+          {
+            "element": "form",
+            "on": {
+              "submit": "start"
+            },
+            "style": "margin-bottom: 0.5rem; display: flex; gap: 0.5rem;",
+            "children": [
+              {
+                "element": "div",
+                "children": [
+                  {
+                    "element": "text",
+                    "text": "Player Count: "
+                  },
+                  {
+                    "element": "input",
+                    "type": "number",
+                    "vModel": "totalPlayers",
+                    "style": "width: 3rem;",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "element": "div",
+                "children": [
+                  {
+                    "element": "text",
+                    "text": "Mode: "
+                  },
+                  {
+                    "element": "select",
+                    "vModel": "mode",
+                    "required": true,
+                    "children": [
+                      {
+                        "element": "option",
+                        "text": "Endpoint"
+                      },
+                      {
+                        "element": "option",
+                        "text": "Direct"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "element": "template",
+                "vIf": "mode === 'Endpoint'",
+                "children": [
+                  {
+                    "element": "div",
+                    "children": [
+                      {
+                        "element": "text",
+                        "text": "Endpoint URL: "
+                      },
+                      {
+                        "element": "input",
+                        "type": "text",
+                        "vModel": "endpoint",
+                        "style": "width: 30rem;",
+                        "required": true
+                      }
+                    ]
+                  },
+                  {
+                    "element": "div",
+                    "children": [
+                      {
+                        "element": "text",
+                        "text": "Match Type: "
+                      },
+                      {
+                        "element": "select",
+                        "vModel": "matchType",
+                        "required": true,
+                        "children": [
+                          {
+                            "element": "option",
+                            "value": 1,
+                            "text": "Normal"
+                          },
+                          {
+                            "element": "option",
+                            "value": 2,
+                            "text": "Tournament"
+                          },
+                          {
+                            "element": "option",
+                            "value": 3,
+                            "text": "Private Table"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "element": "div",
+                    "vIf": "matchType === 1",
+                    "children": [
+                      {
+                        "element": "select",
+                        "vModel": "stakesId",
+                        "required": true,
+                        "children": [
+                          {
+                            "element": "option",
+                            "value": 1,
+                            "text": "Texas Hold'em"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "element": "div",
+                    "vIf": "matchType === 2",
+                    "children": [
+                      {
+                        "element": "input",
+                        "type": "number",
+                        "vModel": "tournamentId",
+                        "placeholder": "Tournament ID",
+                        "required": true,
+                        "min": 1
+                      }
+                    ]
+                  },
+                  {
+                    "element": "div",
+                    "vIf": "matchType === 3",
+                    "style": "display: flex; gap: 0.5rem;",
+                    "children": [
+                      {
+                        "element": "div",
+                        "children": [
+                          {
+                            "element": "text",
+                            "text": "Table ID: "
+                          },
+                          {
+                            "element": "input",
+                            "type": "number",
+                            "vModel": "tableId",
+                            "style": "width: 5rem;",
+                            "required": true,
+                            "min": 1
+                          }
+                        ]
+                      },
+                      {
+                        "element": "div",
+                        "children": [
+                          {
+                            "element": "text",
+                            "text": "Table Password: "
+                          },
+                          {
+                            "element": "input",
+                            "type": "text",
+                            "vModel": "tablePassword",
+                            "style": "width: 5rem;",
+                            "required": true
+                          }
+                        ]
+                      },
+                      {
+                        "element": "div",
+                        "children": [
+                          {
+                            "element": "text",
+                            "text": "Longitude: "
+                          },
+                          {
+                            "element": "input",
+                            "type": "number",
+                            "vModel": "longitude",
+                            "style": "width: 5rem;",
+                            "required": true
+                          }
+                        ]
+                      },
+                      {
+                        "element": "div",
+                        "children": [
+                          {
+                            "element": "text",
+                            "text": "Latitude: "
+                          },
+                          {
+                            "element": "input",
+                            "type": "number",
+                            "vModel": "latitude",
+                            "style": "width: 5rem;",
+                            "required": true
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "element": "template",
+                "vIf": "mode === 'Direct'",
+                "children": [
+                  {
+                    "element": "div",
+                    "children": [
+                      {
+                        "element": "text",
+                        "text": "WebSocket URL: "
+                      },
+                      {
+                        "element": "input",
+                        "type": "text",
+                        "vModel": "webSocketUrl",
+                        "style": "width: 15rem;",
+                        "required": true
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "element": "div",
+                "children": [
+                  {
+                    "element": "button",
+                    "text": "Start All"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "bottom": [
+          {
+            "element": "div",
+            "style": "background-color: #e7f4ff;",
+            "children": []
+          }
+        ]
+      },
+      "children": []
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "name": "Player",
+  "props": {
+    "index": "number",
+    "mode": "'Endpoint' | 'Direct'",
+    "endpoint": "string",
+    "matchType": "number",
+    "stakesId": "number",
+    "tournamentId": "number | null",
+    "tableId": "number",
+    "tablePassword": "string",
+    "longitude": "number",
+    "latitude": "number",
+    "webSocketUrl": "string"
+  },
+  "variables": {
+    "eventLog": [],
+    "websocket": null,
+    "gameWebsocket": null,
+    "status": "...",
+    "userId": null,
+    "roomId": null,
+    "turnUserId": null,
+    "dealerUserId": null,
+    "smallBlindUserId": null,
+    "bigBlindUserId": null,
+    "playerCurrentDecision": [],
+    "raiseValues": [],
+    "selectedRaiseValue": null
+  },
+  "computed": {
+    "playerLoginDetails": "const stringUserId = String(userId.value)\nreturn {\n  userName: `Test_${props.index}`,\n  loginType: '1',\n  deviceId: `test${props.index}`,\n  type: '2',\n  userId: userId.value,\n  roomId: roomId.value,\n  isUserTurn: String(turnUserId.value) === stringUserId && turnUserId.value !== null,\n  isDealer: dealerUserId.value === stringUserId,\n  isSmallBlind: smallBlindUserId.value === stringUserId,\n  isBigBlind: bigBlindUserId.value === stringUserId,\n  isCheck: playerCurrentDecision.value.includes(Constants.Action.Check),\n  isCall: playerCurrentDecision.value.includes(Constants.Action.Call),\n  isRaise: playerCurrentDecision.value.includes(Constants.Action.Raise),\n  isFold: playerCurrentDecision.value.includes(Constants.Action.Fold),\n  isAllIn: playerCurrentDecision.value.includes(Constants.Action.AllIn),\n  isSetHand: playerCurrentDecision.value.includes(Constants.Action.SetHand),\n  isDiscard: playerCurrentDecision.value.includes(Constants.Action.Discard),\n}",
+    "playerLabels": "const labels = []\n\nif (playerLoginDetails.value.isUserTurn) {\n  labels.push('Your Turn')\n}\n\nif (!playerLoginDetails.value.isUserTurn && turnUserId.value !== null) {\n  labels.push('Other Player Turn')\n}\n\nif (playerLoginDetails.value.isDealer) {\n  labels.push('Dealer')\n}\n\nif (playerLoginDetails.value.isSmallBlind) {\n  labels.push('Small Blind')\n}\n\nif (playerLoginDetails.value.isBigBlind) {\n  labels.push('Big Blind')\n}\n\nreturn labels.join(' / ')"
+  },
+  "nodes": [
+    {
+      "element": "PlayerFrame",
+      "slots": {
+        "1-left": [
+          {
+            "element": "text",
+            "text": "Player: {{ playerLoginDetails.userName }} / User ID: {{ playerLoginDetails.userId }} / Room ID: {{ playerLoginDetails.roomId }} ({{ status }})",
+            "children": []
+          }
+        ],
+        "1-right": [
+          {
+            "element": "text",
+            "text": "timer",
+            "children": []
+          }
+        ],
+        "3": [
+          {
+            "element": "text",
+            "text": "{{ playerLabels }}",
+            "children": []
+          }
+        ]
+      },
+      "children": []
+    }
+  ]
+}
