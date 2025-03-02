@@ -1,5 +1,5 @@
 <template>
-  <FabricateComponent :components="{ Root: GameTesterRoot, Player: GameTesterPlayer }" root-component="Root" />
+  <FabricateComponent :components="{ Root: GameTesterRoot, Player: GameTesterPlayer }" root-component="Root" :props="{}" />
 </template>
 
 <script setup lang="ts">

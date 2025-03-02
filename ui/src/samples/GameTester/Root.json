@@ -258,8 +258,22 @@
         ],
         "bottom": [
           {
-            "element": "div",
-            "style": "background-color: #e7f4ff;",
+            "element": "Player",
+            "ref": "player",
+            "vFor": "i in totalPlayers",
+            "props": {
+              "index": "i",
+              "mode": "mode",
+              "endpoint": "endpoint",
+              "matchType": "matchType",
+              "stakesId": "stakesId",
+              "tournamentId": "tournamentId",
+              "tableId": "tableId",
+              "tablePassword": "tablePassword",
+              "longitude": "longitude",
+              "latitude": "latitude",
+              "webSocketUrl": "webSocketUrl"
+            },
             "children": []
           }
         ]
