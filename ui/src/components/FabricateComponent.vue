@@ -9,6 +9,7 @@ import { ref, defineComponent, h, resolveDynamicComponent, computed, getCurrentI
 import AppFrame from './FabricateIncludes/AppFrame.vue'
 import PlayerFrame from './FabricateIncludes/PlayerFrame.vue'
 import PlayersContainer from './FabricateIncludes/PlayersContainer.vue'
+import { useTimer } from '../composables/useTimer'
 
 const componentsMap: Record<string, any> = {
   AppFrame,
@@ -23,9 +24,31 @@ const rootProps = defineProps<{
 }>()
 
 const vars: Record<string, any> = {}
+
 Object.keys(rootProps.components[rootProps.rootComponent].variables).forEach(key => {
-  vars[key] = ref(rootProps.components[rootProps.rootComponent].variables[key])
+  const value = rootProps.components[rootProps.rootComponent].variables[key]
+  if (typeof value === 'object' && value !== null) {
+    // we need to deep clone the object / array or else same object / array will be shared across all instances
+    vars[key] = ref(JSON.parse(JSON.stringify(value)))
+  } else {
+    vars[key] = ref(value)
+  }
 })
+
+vars.timer = useTimer({
+  countDown: true
+})
+
+const defineExposeObject = ref({})
+const methods = ref({})
+
+function defineExposeHelper(obj: Record<string, any>) {
+  defineExposeObject.value = obj
+}
+
+function defineMethods(obj: Record<string, any>) {
+  methods.value = obj
+}
 
 if (rootProps.components[rootProps.rootComponent].computed) {
   Object.keys(rootProps.components[rootProps.rootComponent].computed).forEach(key => {
@@ -38,7 +61,16 @@ if (rootProps.components[rootProps.rootComponent].computed) {
   })
 }
 
-console.log(vars)
+const rootPropsPropsDeValued = Object.keys(rootProps.props).reduce((acc, key) => {
+  acc[key] = rootProps.props[key].value
+  return acc
+}, {})
+
+new Function('vars', 'props', 'Constants', 'defineMethods', 'defineExpose',
+  `with(vars){ ${rootProps.components[rootProps.rootComponent].script} }`
+)(vars, rootPropsPropsDeValued, rootProps.components[rootProps.rootComponent].Constants || {}, defineMethods, defineExposeHelper)
+
+defineExpose(defineExposeObject.value)
 
 const selfComp = getCurrentInstance()?.type
 
@@ -62,7 +94,7 @@ const Renderer = defineComponent({
 
     return () => {
       if (!shouldRender.value) return null
-      const { element, children, slots, text, vModel, vIf, vFor, ...attrs } = props.node
+      const { element, children, slots, text, vModel, vIf, vFor, on, ref, ...attrs } = props.node
 
       if (vFor) {
         const [alias, source] = vFor.split(' in ')
@@ -96,18 +128,29 @@ const Renderer = defineComponent({
             }
           })
         }
-        return h(selfComp, {
+
+        const componentProps = {
           components: rootProps.components,
           rootComponent: element,
           props: subProps
-        })
+        }
+
+        if (ref) {
+          componentProps.ref = (el: any) => {
+            vars[ref] = el
+          }
+        }
+
+        return h(selfComp, componentProps)
       }
 
       const content: VNode<RendererNode, RendererElement, { [key: string]: any }>[] = []
       if(text) {
         const interpolatedText = text.replace(/{{\s*(.*?)\s*}}/g, (_, expression) => {
           try {
-            return new Function('vars', `with(vars){ return ${expression}; }`)(vars) ?? ''
+            const replaceValue = new Function('vars', `with(vars){ return ${expression}; }`)(vars) ?? ''
+            // console.log({ expression, replaceValue })
+            return replaceValue
           } catch {
             return ''
           }
@@ -134,7 +177,7 @@ const Renderer = defineComponent({
 
       const comp = componentsMap[element] || resolveDynamicComponent(element || 'div')
 
-      let extraProps = {}
+      let extraProps: Record<string, any> = {}
 
       if (props.node.props) {
         Object.keys(props.node.props).forEach(key => {
@@ -168,11 +211,46 @@ const Renderer = defineComponent({
         }
       }
 
+      // Handle event handlers in the 'on' property
+      const eventHandlers: Record<string, any> = {}
+      if (on) {
+        Object.keys(on).forEach(eventName => {
+          const handlerCode = on[eventName]
+          eventHandlers[`on${eventName.charAt(0).toUpperCase() + eventName.slice(1)}`] = (...args: any[]) => {
+            // If the handler is a direct method reference
+            if (methods.value[handlerCode]) {
+              return methods.value[handlerCode](...args)
+            }
+
+            // Otherwise, evaluate the handler code
+            try {
+              return new Function('vars', 'methods', 'event', 'args', `with(vars){ with(methods){ ${handlerCode} }}`)
+                (vars, methods.value, args[0], args)
+            } catch (error) {
+              console.error(`Error executing event handler for ${eventName}:`, error)
+            }
+          }
+        })
+      }
+
       if (element === 'template') {
         return content
       }
 
-      return h(comp, { ...attrs, ...extraProps, style: props.node.style || {} }, slotFns)
+      const finalProps = {
+        ...attrs,
+        ...extraProps,
+        ...eventHandlers,
+        style: props.node.style || {}
+      }
+
+      if (ref) {
+        finalProps.ref = (el: any) => {
+          vars[ref] = el
+        }
+      }
+
+      return h(comp, finalProps, slotFns)
     }
   }
 })
