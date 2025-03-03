@@ -1,7 +1,7 @@
 {
   "name": "Root",
   "variables": {
-    "totalPlayers": 2,
+    "totalPlayers": 3,
     "mode": "Endpoint",
     "endpoint": "",
     "matchType": 1,
@@ -258,23 +258,30 @@
         ],
         "bottom": [
           {
-            "element": "Player",
-            "ref": "player",
-            "vFor": "i in totalPlayers",
-            "props": {
-              "index": "i",
-              "mode": "mode",
-              "endpoint": "endpoint",
-              "matchType": "matchType",
-              "stakesId": "stakesId",
-              "tournamentId": "tournamentId",
-              "tableId": "tableId",
-              "tablePassword": "tablePassword",
-              "longitude": "longitude",
-              "latitude": "latitude",
-              "webSocketUrl": "webSocketUrl"
-            },
-            "children": []
+            "element": "PlayersContainer",
+            "slots": {
+              "default": [
+                {
+                  "element": "Player",
+                    "ref": "player",
+                    "vFor": "i in totalPlayers",
+                    "props": {
+                      "index": "i",
+                      "mode": "mode",
+                      "endpoint": "endpoint",
+                      "matchType": "matchType",
+                      "stakesId": "stakesId",
+                      "tournamentId": "tournamentId",
+                      "tableId": "tableId",
+                      "tablePassword": "tablePassword",
+                      "longitude": "longitude",
+                      "latitude": "latitude",
+                      "webSocketUrl": "webSocketUrl"
+                    },
+                    "children": []
+                }
+              ]
+            }
           }
         ]
       },

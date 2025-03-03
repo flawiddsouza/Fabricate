@@ -6,8 +6,15 @@
 
 <script setup lang="ts">
 import { ref, defineComponent, h, resolveDynamicComponent, computed, getCurrentInstance, type RendererElement, type RendererNode, type VNode } from 'vue'
-import AppFrame from './AppFrame.vue'
-import PlayerFrame from './PlayerFrame.vue'
+import AppFrame from './FabricateIncludes/AppFrame.vue'
+import PlayerFrame from './FabricateIncludes/PlayerFrame.vue'
+import PlayersContainer from './FabricateIncludes/PlayersContainer.vue'
+
+const componentsMap: Record<string, any> = {
+  AppFrame,
+  PlayerFrame,
+  PlayersContainer,
+}
 
 const rootProps = defineProps<{
   components: any,
@@ -25,7 +32,7 @@ if (rootProps.components[rootProps.rootComponent].computed) {
     vars[key] = computed(() => {
       const constants = rootProps.components[rootProps.rootComponent].Constants || {}
       return new Function('vars', 'props', 'Constants',
-        `with(vars, props, Constants){ ${rootProps.components[rootProps.rootComponent].computed[key]} }`
+        `${rootProps.components[rootProps.rootComponent].computed[key]}`
       )(vars, rootProps.props, constants)
     })
   })
@@ -55,7 +62,21 @@ const Renderer = defineComponent({
 
     return () => {
       if (!shouldRender.value) return null
-      const { element, children, slots, text, vModel, vIf, ...attrs } = props.node
+      const { element, children, slots, text, vModel, vIf, vFor, ...attrs } = props.node
+
+      if (vFor) {
+        const [alias, source] = vFor.split(' in ')
+        let items = new Function('vars', `with(vars){ return ${source}.value; }`)(vars)
+
+        if (typeof items === 'number') {
+          items = Array.from({ length: items }, (_, i) => i + 1)
+        }
+
+        return items.map((itemValue: any, idx: number) => {
+          const newNode = { ...props.node, vFor: undefined, scoped: { ...props.node.scoped, [alias]: itemValue } }
+          return h(Renderer, { node: newNode, key: idx })
+        })
+      }
 
       const subcomponent = rootProps.components[element]
       if (subcomponent) {
@@ -63,7 +84,16 @@ const Renderer = defineComponent({
         if (props.node.props) {
           Object.keys(props.node.props).forEach(key => {
             const val = props.node.props[key]
-            subProps[key] = typeof val === 'string' && vars[val] ? vars[val].value : val
+            if (typeof val === 'string') {
+              try {
+                const varsExtended = { ...vars, ...props.node.scoped }
+                subProps[key] = new Function('vars', `with(vars){ return ${val}; }`)(varsExtended)
+              } catch {
+                subProps[key] = `!![Could not resolve: ${val}]!!`
+              }
+            } else {
+              subProps[key] = val
+            }
           })
         }
         return h(selfComp, {
@@ -75,7 +105,14 @@ const Renderer = defineComponent({
 
       const content: VNode<RendererNode, RendererElement, { [key: string]: any }>[] = []
       if(text) {
-        content.push(h('span', text))
+        const interpolatedText = text.replace(/{{\s*(.*?)\s*}}/g, (_, expression) => {
+          try {
+            return new Function('vars', `with(vars){ return ${expression}; }`)(vars) ?? ''
+          } catch {
+            return ''
+          }
+        })
+        content.push(h('span', interpolatedText))
       }
       if(children) {
         content.push(...children.map((child: any, index: number) =>
@@ -95,10 +132,6 @@ const Renderer = defineComponent({
         slotFns.default = () => content
       }
 
-      const componentsMap: Record<string, any> = {
-        AppFrame,
-        PlayerFrame,
-      }
       const comp = componentsMap[element] || resolveDynamicComponent(element || 'div')
 
       let extraProps = {}
@@ -107,7 +140,6 @@ const Renderer = defineComponent({
         Object.keys(props.node.props).forEach(key => {
           const val = props.node.props[key]
           if (typeof val === 'string') {
-            console.log(vars.playerLoginDetails.value)
             const value = new Function('vars', `with(vars){ return ${val}; }`)(vars)
             extraProps[key] = value
           } else {
