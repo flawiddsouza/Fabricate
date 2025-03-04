@@ -137,7 +137,9 @@ const Renderer = defineComponent({
 
         if (ref) {
           componentProps.ref = (el: any) => {
-            vars[ref] = el
+            vars[ref] = {
+              value: el
+            }
           }
         }
 
@@ -246,7 +248,9 @@ const Renderer = defineComponent({
 
       if (ref) {
         finalProps.ref = (el: any) => {
-          vars[ref] = el
+          vars[ref] = {
+            value: el
+          }
         }
       }
 
