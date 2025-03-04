@@ -1,0 +1,52 @@
+{
+  "name": "Root",
+  "variables": {
+    "selectedRaiseValue": null,
+    "raiseValues": [
+      {
+        "percentage": 0,
+        "value": 0.04
+      },
+      {
+        "percentage": 50,
+        "value": 0.06
+      },
+      {
+        "percentage": 100,
+        "value": 0.08
+      },
+      {
+        "percentage": 150,
+        "value": 0.1
+      },
+      {
+        "percentage": 200,
+        "value": 0.12
+      },
+      {
+        "percentage": 0,
+        "value": 1
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "element": "div",
+      "text": "Selected raise value: {{ selectedRaiseValue.value ? selectedRaiseValue.value : 'Nothing Selected' }}"
+    },
+    {
+      "element": "select",
+      "vModel": "selectedRaiseValue",
+      "style": "margin-top: 0.5rem",
+      "children": [
+        {
+          "element": "option",
+          "vFor": "raiseValue in raiseValues",
+          "text": "{{ raiseValue.value }} ({{ raiseValue.percentage }}%)",
+          ":value": "raiseValue.value"
+        }
+      ]
+    }
+  ],
+  "script": ""
+}

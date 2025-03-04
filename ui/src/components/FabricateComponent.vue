@@ -174,14 +174,8 @@ const Renderer = defineComponent({
       if(text) {
         const interpolatedText = text.replace(/{{\s*(.*?)\s*}}/g, (_: any, expression: string) => {
           try {
-            // Create a combination of vars and scoped variables for interpolation
-            const varsWithScoped = { ...vars }
-            if (props.node.scoped) {
-              Object.keys(props.node.scoped).forEach(key => {
-                varsWithScoped[key] = { value: props.node.scoped[key].value }
-              })
-            }
-            const replaceValue = new Function('vars', `with(vars){ return ${expression}; }`)(varsWithScoped) ?? ''
+            const varsExtended = { ...vars, ...props.node.scoped }
+            const replaceValue = new Function('vars', `with(vars){ return ${expression}; }`)(varsExtended) ?? ''
             // console.log({ expression, replaceValue })
             return replaceValue
           } catch (error) {
@@ -223,6 +217,19 @@ const Renderer = defineComponent({
             extraProps[key] = val
           }
         })
+      }
+
+      // Handle explicit :value binding
+      if (props.node[':value'] !== undefined) {
+        const varsExtended = { ...vars, ...props.node.scoped }
+        try {
+          extraProps.value = new Function('vars', `with(vars){ return ${props.node[':value']}; }`)(varsExtended)
+        } catch (error) {
+          console.error('Error evaluating :value binding:', props.node[':value'], error)
+          extraProps.value = undefined
+        }
+        // Remove the :value attribute so it doesn't get passed to the component
+        delete attrs[':value']
       }
 
       if (vModel && (element === 'input' || element === 'textarea')) {

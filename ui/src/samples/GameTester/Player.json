@@ -107,11 +107,16 @@
             "children": [
               {
                 "element": "select",
-                "model": "selectedRaiseValue",
+                "vModel": "selectedRaiseValue",
                 "style": "margin-left: 0.5rem",
-                "optionsVFor": "raiseValue in raiseValues",
-                "optionText": "{{ raiseValue.value }} ({{ raiseValue.percentage }}%)",
-                "optionValue": "raiseValue.value"
+                "children": [
+                  {
+                    "element": "option",
+                    "vFor": "raiseValue in raiseValues",
+                    "text": "{{ raiseValue.value }} ({{ raiseValue.percentage }}%)",
+                    ":value": "raiseValue.value"
+                  }
+                ]
               },
               {
                 "element": "button",
