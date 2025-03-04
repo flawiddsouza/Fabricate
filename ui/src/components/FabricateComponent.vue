@@ -59,6 +59,10 @@ function setRef(ref: string, el: any) {
     if (Array.isArray(vars[ref].value)) {
       vars[ref].value.push(el)
     } else {
+      // for some reason, we get the same element twice sometimes
+      if (vars[ref].value === el) {
+        return
+      }
       vars[ref].value = [vars[ref].value, el]
     }
   }
