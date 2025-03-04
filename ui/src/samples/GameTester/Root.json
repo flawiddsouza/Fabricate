@@ -263,7 +263,7 @@
               "default": [
                 {
                   "element": "Player",
-                    "ref": "player",
+                    "ref": "playerRefs",
                     "vFor": "i in totalPlayers",
                     "props": {
                       "index": "i",
@@ -288,5 +288,5 @@
       "children": []
     }
   ],
-  "script": ""
+  "script": "function start(event) {\n event.preventDefault()\nplayerRefs.value?.forEach((player) => {\n    player.start()\n  })\n}\n\ndefineMethods({ start })"
 }

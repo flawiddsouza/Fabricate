@@ -50,6 +50,20 @@ function defineMethods(obj: Record<string, any>) {
   methods.value = obj
 }
 
+function setRef(ref: string, el: any) {
+  if (!vars[ref]) {
+    vars[ref] = {
+      value: el
+    }
+  } else {
+    if (Array.isArray(vars[ref].value)) {
+      vars[ref].value.push(el)
+    } else {
+      vars[ref].value = [vars[ref].value, el]
+    }
+  }
+}
+
 if (rootProps.components[rootProps.rootComponent].computed) {
   Object.keys(rootProps.components[rootProps.rootComponent].computed).forEach(key => {
     vars[key] = computed(() => {
@@ -66,9 +80,13 @@ const rootPropsPropsDeValued = Object.keys(rootProps.props).reduce((acc, key) =>
   return acc
 }, {})
 
-new Function('vars', 'props', 'Constants', 'defineMethods', 'defineExpose',
-  `with(vars){ ${rootProps.components[rootProps.rootComponent].script} }`
-)(vars, rootPropsPropsDeValued, rootProps.components[rootProps.rootComponent].Constants || {}, defineMethods, defineExposeHelper)
+try {
+  new Function('vars', 'props', 'Constants', 'defineMethods', 'defineExpose',
+    `with(vars){ ${rootProps.components[rootProps.rootComponent].script} }`
+  )(vars, rootPropsPropsDeValued, rootProps.components[rootProps.rootComponent].Constants || {}, defineMethods, defineExposeHelper)
+} catch (error) {
+  console.error('Error executing script:', error)
+}
 
 defineExpose(defineExposeObject.value)
 
@@ -137,9 +155,7 @@ const Renderer = defineComponent({
 
         if (ref) {
           componentProps.ref = (el: any) => {
-            vars[ref] = {
-              value: el
-            }
+            setRef(ref, el)
           }
         }
 
@@ -248,9 +264,7 @@ const Renderer = defineComponent({
 
       if (ref) {
         finalProps.ref = (el: any) => {
-          vars[ref] = {
-            value: el
-          }
+          setRef(ref, el)
         }
       }
 
