@@ -120,7 +120,7 @@ const Renderer = defineComponent({
 
     return () => {
       if (!shouldRender.value) return null
-      const { element, children, slots, text, vModel, vIf, vFor, on, ref, ...attrs } = props.node
+      const { element, children, slots, text, vModel, vIf, vFor, on, ref, scoped, ...attrs } = props.node
 
       if (vFor) {
         const [alias, source] = vFor.split(' in ')
@@ -174,10 +174,18 @@ const Renderer = defineComponent({
       if(text) {
         const interpolatedText = text.replace(/{{\s*(.*?)\s*}}/g, (_: any, expression: string) => {
           try {
-            const replaceValue = new Function('vars', `with(vars){ return ${expression}; }`)(vars) ?? ''
+            // Create a combination of vars and scoped variables for interpolation
+            const varsWithScoped = { ...vars }
+            if (props.node.scoped) {
+              Object.keys(props.node.scoped).forEach(key => {
+                varsWithScoped[key] = { value: props.node.scoped[key].value }
+              })
+            }
+            const replaceValue = new Function('vars', `with(vars){ return ${expression}; }`)(varsWithScoped) ?? ''
             // console.log({ expression, replaceValue })
             return replaceValue
-          } catch {
+          } catch (error) {
+            console.error('Error interpolating text:', expression, error)
             return ''
           }
         })
