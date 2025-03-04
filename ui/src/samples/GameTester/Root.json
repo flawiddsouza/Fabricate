@@ -21,7 +21,7 @@
           {
             "element": "form",
             "on": {
-              "submit": "start"
+              "submit.prevent": "start"
             },
             "style": "margin-bottom: 0.5rem; display: flex; gap: 0.5rem;",
             "children": [
@@ -288,5 +288,5 @@
       "children": []
     }
   ],
-  "script": "function start(event) {\n event.preventDefault()\nplayerRefs.value?.forEach((player) => {\n    player.start()\n  })\n}\n\ndefineMethods({ start })"
+  "script": "function start() {\n playerRefs.value?.forEach((player) => {\n    player.start()\n  })\n}\n\ndefineMethods({ start })"
 }

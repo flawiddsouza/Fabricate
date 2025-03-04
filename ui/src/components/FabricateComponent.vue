@@ -232,9 +232,26 @@ const Renderer = defineComponent({
       // Handle event handlers in the 'on' property
       const eventHandlers: Record<string, any> = {}
       if (on) {
-        Object.keys(on).forEach(eventName => {
-          const handlerCode = on[eventName]
-          eventHandlers[`on${eventName.charAt(0).toUpperCase() + eventName.slice(1)}`] = (...args: any[]) => {
+        Object.keys(on).forEach(eventKey => {
+          const handlerCode = on[eventKey]
+
+          // Parse event name and modifiers (e.g., "click.stop.prevent")
+          const [eventName, ...modifiers] = eventKey.split('.')
+          const hasStop = modifiers.includes('stop')
+          const hasPrevent = modifiers.includes('prevent')
+
+          const camelCaseEventName = `on${eventName.charAt(0).toUpperCase() + eventName.slice(1)}`
+          eventHandlers[camelCaseEventName] = (...args: any[]) => {
+            const event = args[0]
+
+            // Apply modifiers
+            if (hasStop && event) {
+              event.stopPropagation()
+            }
+            if (hasPrevent && event) {
+              event.preventDefault()
+            }
+
             // If the handler is a direct method reference
             if (methods.value[handlerCode]) {
               return methods.value[handlerCode](...args)
