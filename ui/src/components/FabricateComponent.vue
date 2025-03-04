@@ -1,5 +1,5 @@
 <template>
-  <template v-for="(node, index) in components[rootComponent].nodes" :key="index">
+  <template v-for="(node, _index) in components[rootComponent].nodes" :key="_index">
     <Renderer :node="node" />
   </template>
 </template>
@@ -40,7 +40,7 @@ vars.timer = useTimer({
 })
 
 const defineExposeObject = ref({})
-const methods = ref({})
+const methods = ref<any>({})
 
 function defineExposeHelper(obj: Record<string, any>) {
   defineExposeObject.value = obj
@@ -79,7 +79,7 @@ if (rootProps.components[rootProps.rootComponent].computed) {
   })
 }
 
-const rootPropsPropsDeValued = Object.keys(rootProps.props).reduce((acc, key) => {
+const rootPropsPropsDeValued = Object.keys(rootProps.props).reduce((acc: any, key) => {
   acc[key] = rootProps.props[key].value
   return acc
 }, {})
@@ -94,7 +94,7 @@ try {
 
 defineExpose(defineExposeObject.value)
 
-const selfComp = getCurrentInstance()?.type
+const selfComp = getCurrentInstance()?.type as any
 
 const Renderer = defineComponent({
   name: 'Renderer',
@@ -151,10 +151,10 @@ const Renderer = defineComponent({
           })
         }
 
-        const componentProps = {
+        const componentProps: any = {
           components: rootProps.components,
           rootComponent: element,
-          props: subProps
+          props: subProps,
         }
 
         if (ref) {
@@ -168,7 +168,7 @@ const Renderer = defineComponent({
 
       const content: VNode<RendererNode, RendererElement, { [key: string]: any }>[] = []
       if(text) {
-        const interpolatedText = text.replace(/{{\s*(.*?)\s*}}/g, (_, expression) => {
+        const interpolatedText = text.replace(/{{\s*(.*?)\s*}}/g, (_: any, expression: string) => {
           try {
             const replaceValue = new Function('vars', `with(vars){ return ${expression}; }`)(vars) ?? ''
             // console.log({ expression, replaceValue })
@@ -216,7 +216,7 @@ const Renderer = defineComponent({
       if (vModel && (element === 'input' || element === 'textarea')) {
         extraProps = {
           value: vars[vModel].value,
-          onInput: (e) => {
+          onInput: (e: any) => {
             vars[vModel].value = attrs.type === 'number'
               ? Number(e.target.value)
               : e.target.value
@@ -227,7 +227,7 @@ const Renderer = defineComponent({
       if (vModel && element === 'select') {
         extraProps = {
           value: vars[vModel].value,
-          onChange: (e) => {
+          onChange: (e: any) => {
             vars[vModel].value = Number(e.target.value) || e.target.value
           }
         }
@@ -258,7 +258,7 @@ const Renderer = defineComponent({
 
             try {
               // Create an object that combines unwrapped refs from vars with methods
-              const context = {};
+              const context: any = {};
 
               // Add all methods directly
               Object.keys(methods.value).forEach(key => {
@@ -286,7 +286,7 @@ const Renderer = defineComponent({
         return content
       }
 
-      const finalProps = {
+      const finalProps: any = {
         ...attrs,
         ...extraProps,
         ...eventHandlers,
