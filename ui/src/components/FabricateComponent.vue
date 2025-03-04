@@ -256,15 +256,25 @@ const Renderer = defineComponent({
               event.preventDefault()
             }
 
-            // If the handler is a direct method reference
-            if (methods.value[handlerCode]) {
-              return methods.value[handlerCode](...args)
-            }
-
-            // Otherwise, evaluate the handler code
             try {
-              return new Function('vars', 'methods', 'event', 'args', `with(vars){ with(methods){ ${handlerCode} }}`)
-                (vars, methods.value, args[0], args)
+              // Create an object that combines unwrapped refs from vars with methods
+              const context = {};
+
+              // Add all methods directly
+              Object.keys(methods.value).forEach(key => {
+                context[key] = methods.value[key];
+              });
+
+              // Add all variables, unwrapping refs where needed
+              Object.keys(vars).forEach(key => {
+                Object.defineProperty(context, key, {
+                  get: () => vars[key].value,
+                  set: (value) => { vars[key].value = value }
+                });
+              });
+
+              // Execute the handler with the properly prepared context
+              return new Function('context', 'event', 'args', `with(context){ ${handlerCode}${!handlerCode.endsWith('()') ? '()' : ''} }`)(context, args[0], args)
             } catch (error) {
               console.error(`Error executing event handler for ${eventName}:`, error)
             }
