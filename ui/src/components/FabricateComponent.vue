@@ -79,10 +79,14 @@ if (rootProps.components[rootProps.rootComponent].computed) {
   })
 }
 
-const rootPropsPropsDeValued = Object.keys(rootProps.props).reduce((acc: any, key) => {
-  acc[key] = rootProps.props[key].value
-  return acc
-}, {})
+const rootPropsPropsDeValued = {}
+
+Object.keys(rootProps.props).forEach(key => {
+  Object.defineProperty(rootPropsPropsDeValued, key, {
+    get: () => rootProps.props[key].value,
+    set: (value) => { rootProps.props[key].value = value }
+  })
+})
 
 try {
   new Function('vars', 'props', 'Constants', 'defineMethods', 'defineExpose',
