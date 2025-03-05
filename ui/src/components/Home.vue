@@ -113,6 +113,9 @@ async function processDirectory(handle: FileSystemDirectoryHandle): Promise<Dire
   const components = {}
   let manifest = {}
 
+  // naturally sort files by path
+  files.sort((a, b) => a.path.localeCompare(b.path))
+
   for (const file of files) {
     try {
       const content = await readFileJSON(file)
