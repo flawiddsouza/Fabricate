@@ -27,14 +27,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import {
   openDirectory,
   formatSize,
   type FileEntry,
-  readFileJSON
+  readFileJSON,
+  getFilesFromDirectory
 } from '../utils/fileSystem'
 import FabricateComponent from './FabricateComponent.vue'
+import { get, set } from 'idb-keyval'
 
 const files = ref<FileEntry[]>([])
 const parsedFiles = ref<{
@@ -57,37 +59,63 @@ function reset() {
   parsedFiles.value = []
 }
 
+async function saveDirectoryHandle() {
+  if (directoryHandle.value) {
+    await set('directoryHandle', directoryHandle.value)
+  }
+}
+
+async function loadDirectoryHandle() {
+  const savedHandle = await get('directoryHandle')
+  if (savedHandle) {
+    directoryHandle.value = savedHandle
+  }
+}
+
+async function handleAfterDirectoryOpen() {
+  reset()
+
+  for (const file of files.value) {
+    try {
+      parsedFiles.value.push({
+        file,
+        content: await readFileJSON(file)
+      })
+    } catch {
+      // we ignore if json parsing fails
+    }
+  }
+
+  for (const parsedFile of parsedFiles.value) {
+    if (parsedFile.file.path !== 'manifest.json') {
+      components.value[parsedFile.content.name] = parsedFile.content
+    } else {
+      manifest.value = parsedFile.content
+    }
+  }
+}
+
 async function handleOpenDirectory() {
   try {
     const result = await openDirectory()
     directoryHandle.value = result.directoryHandle
     files.value = result.files
-    reset()
-
-    for (const file of files.value) {
-      try {
-        parsedFiles.value.push({
-          file,
-          content: await readFileJSON(file)
-        })
-      } catch {
-        // we ignore if json parsing fails
-      }
-    }
-
-    for (const parsedFile of parsedFiles.value) {
-      if (parsedFile.file.path !== 'manifest.json') {
-        components.value[parsedFile.content.name] = parsedFile.content
-      } else {
-        manifest.value = parsedFile.content
-      }
-    }
+    saveDirectoryHandle()
+    await handleAfterDirectoryOpen()
   } catch (error) {
     if (error instanceof Error) {
       alert(`Error opening directory: ${error.message}`)
     }
   }
 }
+
+onMounted(async() => {
+  await loadDirectoryHandle()
+  if (directoryHandle.value) {
+    files.value = await getFilesFromDirectory(directoryHandle.value)
+    await handleAfterDirectoryOpen()
+  }
+})
 </script>
 
 <style scoped>
