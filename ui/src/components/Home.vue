@@ -13,21 +13,21 @@
       </ul>
     </div>
 
-    <div v-if="parsedFiles.length" style="margin-bottom: 1rem;">
+    <div v-if="canRenderComponent" style="margin-bottom: 1rem;">
       <button @click="renderComponent = !renderComponent">
         <template v-if="renderComponent">Hide</template>
         <template v-else>Show</template>
       </button>
     </div>
 
-    <div v-if="renderComponent">
+    <div v-if="shouldRenderComponent">
       <FabricateComponent :components="components" :root-component="manifest.rootComponent" :props="{}" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import {
   openDirectory,
   formatSize,
@@ -42,26 +42,37 @@ const parsedFiles = ref<{
   content: any
 }[]>([])
 const directoryHandle = ref<FileSystemDirectoryHandle | null>(null)
-const directoryPath = ref<string>('')
 const components = ref<any>({})
 const manifest = ref<any>({})
 const renderComponent = ref(false)
+
+const directoryPath = computed(() => directoryHandle.value?.name ?? '')
+const canRenderComponent = computed(() => Object.keys(components.value).length && Object.keys(manifest.value).length)
+const shouldRenderComponent = computed(() => renderComponent.value && canRenderComponent.value)
+
+function reset() {
+  components.value = {}
+  manifest.value = {}
+  renderComponent.value = false
+  parsedFiles.value = []
+}
 
 async function handleOpenDirectory() {
   try {
     const result = await openDirectory()
     directoryHandle.value = result.directoryHandle
-    directoryPath.value = result.directoryHandle?.name ?? ''
     files.value = result.files
-    components.value = {}
-    manifest.value = {}
-    renderComponent.value = false
+    reset()
 
     for (const file of files.value) {
-      parsedFiles.value.push({
-        file,
-        content: await readFileJSON(file)
-      })
+      try {
+        parsedFiles.value.push({
+          file,
+          content: await readFileJSON(file)
+        })
+      } catch {
+        // we ignore if json parsing fails
+      }
     }
 
     for (const parsedFile of parsedFiles.value) {
