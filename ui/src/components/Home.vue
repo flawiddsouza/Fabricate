@@ -4,13 +4,23 @@
       <button @click="handleOpenDirectory">Open Directory</button>
     </div>
 
-    <div v-if="files.length">
-      <h3>{{ directoryPath }} ({{ files.length }}):</h3>
-      <ul>
-        <li v-for="(file, index) in files" :key="index">
-          {{ file.path }} - {{ formatSize(file.file.size) }}
-        </li>
-      </ul>
+    <div v-if="directories.length" class="directories-list">
+      <h3>Open Directories:</h3>
+      <div v-for="(dir, index) in directories" :key="index" class="directory-item"
+        :class="{ 'active-directory': activeDirectoryIndex === index }" @click="setActiveDirectory(index)">
+        <div class="directory-header">
+          <span class="directory-name">{{ dir.name }}</span>
+          <span class="directory-file-count">({{ dir.files.length }} files)</span>
+          <button class="remove-directory-btn" @click.stop="removeDirectory(index)">✕</button>
+        </div>
+        <div v-if="showDetails && activeDirectoryIndex === index" class="directory-files">
+          <ul>
+            <li v-for="(file, fIndex) in dir.files" :key="fIndex">
+              {{ file.path }} - {{ formatSize(file.file.size) }}
+            </li>
+          </ul>
+        </div>
+      </div>
     </div>
 
     <div v-if="canRenderComponent" style="margin-bottom: 1rem;">
@@ -25,12 +35,11 @@
     </div>
 
     <div v-if="shouldRenderComponent">
-      <FabricateComponent :components="components" :root-component="manifest.rootComponent" :props="{}" />
+      <FabricateComponent :components="activeDirectory.components" :root-component="activeDirectory.manifest.rootComponent" :props="{}" />
     </div>
   </div>
   <div v-if="dedicatedMode && shouldRenderComponent">
-    <FabricateComponent v-if="dedicatedMode" :components="components" :root-component="manifest.rootComponent"
-      :props="{}" />
+    <FabricateComponent v-if="dedicatedMode" :components="activeDirectory.components" :root-component="activeDirectory.manifest.rootComponent" :props="{}" />
   </div>
 </template>
 
@@ -46,71 +55,103 @@ import {
 import FabricateComponent from './FabricateComponent.vue'
 import { get, set } from 'idb-keyval'
 
-const files = ref<FileEntry[]>([])
-const parsedFiles = ref<{
-  file: FileEntry
-  content: any
-}[]>([])
-const directoryHandle = ref<FileSystemDirectoryHandle | null>(null)
-const components = ref<any>({})
-const manifest = ref<any>({})
+interface DirectoryData {
+  handle: FileSystemDirectoryHandle
+  name: string
+  files: FileEntry[]
+  parsedFiles: {
+    file: FileEntry
+    content: any
+  }[]
+  components: any
+  manifest: any
+}
+
+const directories = ref<DirectoryData[]>([])
+const activeDirectoryIndex = ref<number>(-1)
 const renderComponent = ref(false)
 const dedicatedMode = ref(false)
+const showDetails = ref(true)
 
-const directoryPath = computed(() => directoryHandle.value?.name ?? '')
-const canRenderComponent = computed(() => Object.keys(components.value).length && Object.keys(manifest.value).length)
-const shouldRenderComponent = computed(() => renderComponent.value && canRenderComponent.value)
+const activeDirectory = computed(() =>
+  activeDirectoryIndex.value >= 0 && activeDirectoryIndex.value < directories.value.length
+    ? directories.value[activeDirectoryIndex.value]
+    : null
+)
 
-function reset() {
-  components.value = {}
-  manifest.value = {}
-  renderComponent.value = false
-  parsedFiles.value = []
+const canRenderComponent = computed(() => {
+  if (!activeDirectory.value) return false
+  return Object.keys(activeDirectory.value.components).length > 0 &&
+    Object.keys(activeDirectory.value.manifest).length > 0
+})
+
+const shouldRenderComponent = computed(() => renderComponent.value && canRenderComponent.value && activeDirectory.value)
+
+async function saveDirectoryHandles() {
+  const handles = directories.value.map(dir => dir.handle)
+  await set('directoryHandles', handles)
+  await set('activeDirectoryIndex', activeDirectoryIndex.value)
 }
 
-async function saveDirectoryHandle() {
-  if (directoryHandle.value) {
-    await set('directoryHandle', directoryHandle.value)
+async function loadDirectoryHandles() {
+  const savedHandles = await get('directoryHandles')
+  const savedActiveIndex = await get('activeDirectoryIndex') || 0
+
+  if (Array.isArray(savedHandles) && savedHandles.length > 0) {
+    for (const handle of savedHandles) {
+      await addDirectory(handle)
+    }
+
+    if (savedActiveIndex >= 0 && savedActiveIndex < directories.value.length) {
+      activeDirectoryIndex.value = savedActiveIndex
+    }
   }
 }
 
-async function loadDirectoryHandle() {
-  const savedHandle = await get('directoryHandle')
-  if (savedHandle) {
-    directoryHandle.value = savedHandle
-  }
-}
+async function processDirectory(handle: FileSystemDirectoryHandle): Promise<DirectoryData> {
+  const files = await getFilesFromDirectory(handle)
+  const parsedFiles = []
+  const components = {}
+  let manifest = {}
 
-async function handleAfterDirectoryOpen() {
-  reset()
-
-  for (const file of files.value) {
+  for (const file of files) {
     try {
-      parsedFiles.value.push({
-        file,
-        content: await readFileJSON(file)
-      })
+      const content = await readFileJSON(file)
+      parsedFiles.push({ file, content })
+
+      if (file.path !== 'manifest.json') {
+        components[content.name] = content
+      } else {
+        manifest = content
+      }
     } catch {
-      // we ignore if json parsing fails
+      // ignore if json parsing fails
     }
   }
 
-  for (const parsedFile of parsedFiles.value) {
-    if (parsedFile.file.path !== 'manifest.json') {
-      components.value[parsedFile.content.name] = parsedFile.content
-    } else {
-      manifest.value = parsedFile.content
-    }
+  return {
+    handle,
+    name: handle.name,
+    files,
+    parsedFiles,
+    components,
+    manifest
   }
+}
+
+async function addDirectory(handle: FileSystemDirectoryHandle) {
+  const dirData = await processDirectory(handle)
+  directories.value.push(dirData)
+  if (activeDirectoryIndex.value === -1) {
+    activeDirectoryIndex.value = 0
+  }
+  await saveDirectoryHandles()
 }
 
 async function handleOpenDirectory() {
   try {
     const result = await openDirectory()
-    directoryHandle.value = result.directoryHandle
-    files.value = result.files
-    saveDirectoryHandle()
-    await handleAfterDirectoryOpen()
+    await addDirectory(result.directoryHandle)
   } catch (error) {
     if (error instanceof Error) {
       alert(`Error opening directory: ${error.message}`)
@@ -118,20 +159,42 @@ async function handleOpenDirectory() {
   }
 }
 
-function openInDedicatedMode() {
-  document.location.search = 'dedicated=true'
+function setActiveDirectory(index: number) {
+  if (index >= 0 && index < directories.value.length) {
+    activeDirectoryIndex.value = index
+    saveDirectoryHandles()
+  }
 }
 
-onMounted(async () => {
-  await loadDirectoryHandle()
-  if (directoryHandle.value) {
-    files.value = await getFilesFromDirectory(directoryHandle.value)
-    await handleAfterDirectoryOpen()
+async function removeDirectory(index: number) {
+  directories.value.splice(index, 1)
+
+  if (directories.value.length === 0) {
+    activeDirectoryIndex.value = -1
+  } else if (activeDirectoryIndex.value >= directories.value.length) {
+    activeDirectoryIndex.value = directories.value.length - 1
   }
+
+  await saveDirectoryHandles()
+}
+
+function openInDedicatedMode() {
+  document.location.search = `dedicated=true&dir=${activeDirectoryIndex.value}`
+}
+
+onMounted(async() => {
+  await loadDirectoryHandles()
 
   if (document.location.search.includes('dedicated=true')) {
     renderComponent.value = true
     dedicatedMode.value = true
+
+    // Parse directory index from URL if available
+    const params = new URLSearchParams(document.location.search)
+    const dirIndex = parseInt(params.get('dir') || '0')
+    if (!isNaN(dirIndex) && dirIndex >= 0 && dirIndex < directories.value.length) {
+      activeDirectoryIndex.value = dirIndex
+    }
   }
 })
 </script>
@@ -140,5 +203,51 @@ onMounted(async () => {
 .home-container {
   font-family: sans-serif;
   margin: 1rem;
+}.directories-list {
+  margin: 1rem 0;
+}
+
+.directory-item {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  cursor: pointer;
+}
+
+.active-directory {
+  border-color: #4CAF50;
+  background-color: rgba(76, 175, 80, 0.1);
+}
+
+.directory-header {
+  display: flex;
+  align-items: center;
+}
+
+.directory-name {
+  font-weight: bold;
+  flex-grow: 1;
+}
+
+.directory-file-count {
+  margin-left: 0.5rem;
+  color: #666;
+}
+
+.remove-directory-btn {
+  margin-left: 1rem;
+  background: none;
+  border: none;
+  color: #f44336;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.directory-files {
+  margin-top: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+  font-size: 0.9rem;
 }
 </style>
