@@ -1,0 +1,6 @@
+{
+  "name": "Game Tester",
+  "description": "A simple game tester",
+  "version": "1.0.0",
+  "rootComponent": "Root"
+}

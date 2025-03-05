@@ -1,7 +1,7 @@
 <template>
-  <Renderer />
+  <Home />
 </template>
 
 <script setup lang="ts">
-import Renderer from './components/Renderer.vue'
+import Home from './components/Home.vue'
 </script>
