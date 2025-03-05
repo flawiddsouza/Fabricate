@@ -35,7 +35,7 @@
     </div>
 
     <div v-if="shouldRenderComponent">
-      <FabricateComponent :components="activeDirectory.components" :root-component="activeDirectory.manifest.rootComponent" :props="{}" />
+      <FabricateComponent :key="activeDirectoryIndex" :components="activeDirectory.components" :root-component="activeDirectory.manifest.rootComponent" :props="{}" />
     </div>
   </div>
   <div v-if="loaded && dedicatedMode && shouldRenderComponent">
@@ -96,15 +96,13 @@ async function saveDirectoryHandles() {
 
 async function loadDirectoryHandles() {
   const savedHandles = await get('directoryHandles')
-  const savedActiveIndex = await get('activeDirectoryIndex') || 0
+  const savedActiveIndex = await get('activeDirectoryIndex') ?? -1
 
   if (Array.isArray(savedHandles) && savedHandles.length > 0) {
+    activeDirectoryIndex.value = savedActiveIndex
+
     for (const handle of savedHandles) {
       await addDirectory(handle)
-    }
-
-    if (savedActiveIndex >= 0 && savedActiveIndex < directories.value.length) {
-      activeDirectoryIndex.value = savedActiveIndex
     }
   }
 }
