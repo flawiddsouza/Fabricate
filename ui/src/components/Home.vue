@@ -34,11 +34,11 @@
       </button>
     </div>
 
-    <div v-if="shouldRenderComponent">
+    <div v-if="shouldRenderComponent && activeDirectory">
       <FabricateComponent :key="activeDirectoryIndex" :components="activeDirectory.components" :root-component="activeDirectory.manifest.rootComponent" :props="{}" />
     </div>
   </div>
-  <div v-if="loaded && dedicatedMode && shouldRenderComponent">
+  <div v-if="loaded && dedicatedMode && shouldRenderComponent && activeDirectory">
     <FabricateComponent v-if="dedicatedMode" :components="activeDirectory.components" :root-component="activeDirectory.manifest.rootComponent" :props="{}" />
   </div>
 </template>
@@ -86,7 +86,7 @@ const canRenderComponent = computed(() => {
     Object.keys(activeDirectory.value.manifest).length > 0
 })
 
-const shouldRenderComponent = computed(() => renderComponent.value && canRenderComponent.value && activeDirectory.value)
+const shouldRenderComponent = computed(() => renderComponent.value && canRenderComponent.value)
 
 async function saveDirectoryHandles() {
   const handles = directories.value.map(dir => dir.handle)
@@ -110,7 +110,7 @@ async function loadDirectoryHandles() {
 async function processDirectory(handle: FileSystemDirectoryHandle): Promise<DirectoryData> {
   const files = await getFilesFromDirectory(handle)
   const parsedFiles = []
-  const components = {}
+  const components: any = {}
   let manifest = {}
 
   // naturally sort files by path
@@ -153,6 +153,9 @@ async function addDirectory(handle: FileSystemDirectoryHandle) {
 async function handleOpenDirectory() {
   try {
     const result = await openDirectory()
+    if (!result.directoryHandle) {
+      return
+    }
     await addDirectory(result.directoryHandle)
   } catch (error) {
     if (error instanceof Error) {
