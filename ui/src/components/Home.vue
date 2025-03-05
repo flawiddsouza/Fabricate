@@ -29,7 +29,8 @@
     </div>
   </div>
   <div v-if="dedicatedMode && shouldRenderComponent">
-    <FabricateComponent v-if="dedicatedMode" :components="components" :root-component="manifest.rootComponent" :props="{}" />
+    <FabricateComponent v-if="dedicatedMode" :components="components" :root-component="manifest.rootComponent"
+      :props="{}" />
   </div>
 </template>
 
@@ -121,7 +122,7 @@ function openInDedicatedMode() {
   document.location.search = 'dedicated=true'
 }
 
-onMounted(async() => {
+onMounted(async () => {
   await loadDirectoryHandle()
   if (directoryHandle.value) {
     files.value = await getFilesFromDirectory(directoryHandle.value)
