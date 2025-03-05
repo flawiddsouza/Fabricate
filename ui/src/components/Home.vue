@@ -1,5 +1,5 @@
 <template>
-  <div class="home-container" v-if="!dedicatedMode">
+  <div class="home-container" v-if="loaded && !dedicatedMode">
     <div>
       <button @click="handleOpenDirectory">Open Directory</button>
     </div>
@@ -38,7 +38,7 @@
       <FabricateComponent :components="activeDirectory.components" :root-component="activeDirectory.manifest.rootComponent" :props="{}" />
     </div>
   </div>
-  <div v-if="dedicatedMode && shouldRenderComponent">
+  <div v-if="loaded && dedicatedMode && shouldRenderComponent">
     <FabricateComponent v-if="dedicatedMode" :components="activeDirectory.components" :root-component="activeDirectory.manifest.rootComponent" :props="{}" />
   </div>
 </template>
@@ -72,6 +72,7 @@ const activeDirectoryIndex = ref<number>(-1)
 const renderComponent = ref(false)
 const dedicatedMode = ref(false)
 const showDetails = ref(true)
+const loaded = ref(false)
 
 const activeDirectory = computed(() =>
   activeDirectoryIndex.value >= 0 && activeDirectoryIndex.value < directories.value.length
@@ -196,6 +197,8 @@ onMounted(async() => {
       activeDirectoryIndex.value = dirIndex
     }
   }
+
+  loaded.value = true
 })
 </script>
 
