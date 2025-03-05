@@ -1,5 +1,5 @@
 <template>
-  <div class="home-container">
+  <div class="home-container" v-if="!dedicatedMode">
     <div>
       <button @click="handleOpenDirectory">Open Directory</button>
     </div>
@@ -18,11 +18,18 @@
         <template v-if="renderComponent">Hide</template>
         <template v-else>Show</template>
       </button>
+
+      <button @click="openInDedicatedMode" style="margin-left: 1rem;">
+        Open in Dedicated Mode
+      </button>
     </div>
 
     <div v-if="shouldRenderComponent">
       <FabricateComponent :components="components" :root-component="manifest.rootComponent" :props="{}" />
     </div>
+  </div>
+  <div v-if="dedicatedMode && shouldRenderComponent">
+    <FabricateComponent v-if="dedicatedMode" :components="components" :root-component="manifest.rootComponent" :props="{}" />
   </div>
 </template>
 
@@ -47,6 +54,7 @@ const directoryHandle = ref<FileSystemDirectoryHandle | null>(null)
 const components = ref<any>({})
 const manifest = ref<any>({})
 const renderComponent = ref(false)
+const dedicatedMode = ref(false)
 
 const directoryPath = computed(() => directoryHandle.value?.name ?? '')
 const canRenderComponent = computed(() => Object.keys(components.value).length && Object.keys(manifest.value).length)
@@ -109,11 +117,20 @@ async function handleOpenDirectory() {
   }
 }
 
+function openInDedicatedMode() {
+  document.location.search = 'dedicated=true'
+}
+
 onMounted(async() => {
   await loadDirectoryHandle()
   if (directoryHandle.value) {
     files.value = await getFilesFromDirectory(directoryHandle.value)
     await handleAfterDirectoryOpen()
+  }
+
+  if (document.location.search.includes('dedicated=true')) {
+    renderComponent.value = true
+    dedicatedMode.value = true
   }
 })
 </script>
