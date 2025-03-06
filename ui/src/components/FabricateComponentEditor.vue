@@ -31,9 +31,8 @@
     </div>
 
     <div style="margin-top: 1rem;">
-      <label>Nodes (JSON)<br>
-        <textarea v-model="nodesJson" style="width: 100%; height: 300px;"></textarea>
-      </label>
+      <div><label>Nodes</label></div>
+      <FabricateComponentNodeEditor v-model="modelValue.nodes" />
     </div>
 
     <div style="margin-top: 1rem;">
@@ -46,6 +45,7 @@
 
 <script setup lang="ts">
 import { watch, computed } from 'vue'
+import FabricateComponentNodeEditor from './FabricateComponentNodeEditor.vue'
 
 const props = defineProps<{
   modelValue: any
