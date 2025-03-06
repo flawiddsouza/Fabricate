@@ -2,6 +2,10 @@
   <div class="home-container" v-if="loaded && !dedicatedMode">
     <div>
       <button @click="handleOpenDirectory">Open Directory</button>
+      <button @click="renderComponent = !renderComponent" v-if="canRenderActiveDirectoryComponent" style="margin-left: 1rem;">
+        <template v-if="renderComponent">Hide</template>
+        <template v-else>View</template>
+      </button>
     </div>
 
     <div v-if="directories.length" class="directories-list">
@@ -29,18 +33,12 @@
             </tbody>
           </table>
         </div>
+        <div v-if="canRenderDirectoryComponent(dir)" style="margin-top: 0.5rem;">
+          <button @click.stop="openInDedicatedMode(index)">
+            Open in Dedicated Mode
+          </button>
+        </div>
       </div>
-    </div>
-
-    <div v-if="canRenderComponent" style="margin-bottom: 1rem;">
-      <button @click="renderComponent = !renderComponent">
-        <template v-if="renderComponent">Hide</template>
-        <template v-else>Show</template>
-      </button>
-
-      <button @click="openInDedicatedMode" style="margin-left: 1rem;">
-        Open in Dedicated Mode
-      </button>
     </div>
 
     <div v-if="shouldRenderComponent && activeDirectory">
@@ -90,13 +88,18 @@ const activeDirectory = computed(() =>
     : null
 )
 
-const canRenderComponent = computed(() => {
-  if (!activeDirectory.value) return false
-  return Object.keys(activeDirectory.value.components).length > 0 &&
-    Object.keys(activeDirectory.value.manifest).length > 0
+const canRenderActiveDirectoryComponent = computed(() => {
+  if (!activeDirectory.value) {
+    return false
+  }
+  return canRenderDirectoryComponent(activeDirectory.value)
 })
 
-const shouldRenderComponent = computed(() => renderComponent.value && canRenderComponent.value)
+const shouldRenderComponent = computed(() => renderComponent.value && canRenderActiveDirectoryComponent.value)
+
+function canRenderDirectoryComponent(dir: DirectoryData): boolean {
+  return Object.keys(dir.components).length > 0 && Object.keys(dir.manifest).length > 0
+}
 
 function getDirectoryDisplayName(dir: DirectoryData): string {
   if (dir.manifest && dir.manifest.name) {
@@ -125,7 +128,7 @@ async function loadDirectoryHandles() {
 }
 
 async function processDirectory(handle: FileSystemDirectoryHandle): Promise<DirectoryData> {
-  let files = []
+  let files: any[] = []
   let needsPermission = false
 
   try {
@@ -251,8 +254,8 @@ async function requestPermission(index: number) {
   }
 }
 
-function openInDedicatedMode() {
-  document.location.search = `dedicated=true&dir=${activeDirectoryIndex.value}`
+function openInDedicatedMode(dir: number) {
+  window.open(`?dedicated=true&dir=${dir}`, '_blank')
 }
 
 onMounted(async() => {
