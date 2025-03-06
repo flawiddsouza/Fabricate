@@ -13,7 +13,13 @@
           <span class="directory-file-count">({{ dir.files.length }} files)</span>
           <button class="remove-directory-btn" @click.stop="removeDirectory(index)">✕</button>
         </div>
-        <div v-if="showDetails && activeDirectoryIndex === index" class="directory-files">
+        <div v-if="dir.requestPermission" class="permission-warning">
+          <p>Permission needed to access this directory</p>
+          <button @click.stop="requestPermission(index)" class="request-permission-btn">
+            Request Permission
+          </button>
+        </div>
+        <div v-else-if="showDetails && activeDirectoryIndex === index" class="directory-files">
           <ul>
             <li v-for="(file, fIndex) in dir.files" :key="fIndex">
               {{ file.path }} - {{ formatSize(file.file.size) }}
@@ -65,6 +71,7 @@ interface DirectoryData {
   }[]
   components: any
   manifest: any
+  requestPermission: boolean
 }
 
 const directories = ref<DirectoryData[]>([])
@@ -108,7 +115,34 @@ async function loadDirectoryHandles() {
 }
 
 async function processDirectory(handle: FileSystemDirectoryHandle): Promise<DirectoryData> {
-  const files = await getFilesFromDirectory(handle)
+  let files = []
+  let needsPermission = false
+
+  try {
+    // Check if we have permission first
+    const permissionStatus = await handle.queryPermission({ mode: 'readwrite' })
+
+    if (permissionStatus === 'granted') {
+      files = await getFilesFromDirectory(handle)
+    } else {
+      needsPermission = true
+    }
+  } catch (error) {
+    needsPermission = true
+  }
+
+  if (needsPermission) {
+    return {
+      handle,
+      name: handle.name,
+      files: [],
+      parsedFiles: [],
+      components: {},
+      manifest: {},
+      requestPermission: true
+    }
+  }
+
   const parsedFiles = []
   const components: any = {}
   let manifest = {}
@@ -137,7 +171,8 @@ async function processDirectory(handle: FileSystemDirectoryHandle): Promise<Dire
     files,
     parsedFiles,
     components,
-    manifest
+    manifest,
+    requestPermission: false
   }
 }
 
@@ -183,6 +218,29 @@ async function removeDirectory(index: number) {
   await saveDirectoryHandles()
 }
 
+async function requestPermission(index: number) {
+  if (index < 0 || index >= directories.value.length) return
+
+  const handle = directories.value[index].handle
+
+  try {
+    const permission = await handle.requestPermission({ mode: 'readwrite' })
+
+    if (permission === 'granted') {
+      // Reload the directory data
+      const updatedDirData = await processDirectory(handle)
+      directories.value[index] = updatedDirData
+      await saveDirectoryHandles()
+    } else {
+      alert('Permission denied. Cannot access directory.')
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      alert(`Error requesting permission: ${error.message}`)
+    }
+  }
+}
+
 function openInDedicatedMode() {
   document.location.search = `dedicated=true&dir=${activeDirectoryIndex.value}`
 }
@@ -210,7 +268,9 @@ onMounted(async() => {
 .home-container {
   font-family: sans-serif;
   margin: 1rem;
-}.directories-list {
+}
+
+.directories-list {
   margin: 1rem 0;
 }
 
@@ -256,5 +316,28 @@ onMounted(async() => {
   max-height: 200px;
   overflow-y: auto;
   font-size: 0.9rem;
+}
+
+.permission-warning {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: #fff3cd;
+  border: 1px solid #ffeeba;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.request-permission-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 0.5rem;
+}
+
+.request-permission-btn:hover {
+  background-color: #0069d9;
 }
 </style>
