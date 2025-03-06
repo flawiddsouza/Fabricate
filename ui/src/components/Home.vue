@@ -259,13 +259,13 @@ async function requestPermission(index: number) {
 }
 
 function openInDedicatedMode(dir: number) {
-  window.open(`?dedicated=true&dir=${dir}`, '_blank')
+  window.open(`?dir=${dir}`, '_blank')
 }
 
 onMounted(async() => {
   await loadDirectoryHandles()
 
-  if (document.location.search.includes('dedicated=true')) {
+  if (document.location.search.includes('dir=')) {
     renderComponent.value = true
     dedicatedMode.value = true
 
