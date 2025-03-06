@@ -1,14 +1,18 @@
 <template>
   <div class="home-container" v-if="loaded && !dedicatedMode">
-    <div>
+    <div style="margin-bottom: 1rem;">
       <button @click="handleOpenDirectory">Open Directory</button>
-      <button @click="renderComponent = !renderComponent" v-if="canRenderActiveDirectoryComponent" style="margin-left: 1rem;">
+      <button @click="renderComponent = !renderComponent" v-if="canRenderActiveDirectoryComponent" style="margin-left: 1rem; width: 3rem;">
         <template v-if="renderComponent">Hide</template>
         <template v-else>View</template>
       </button>
+      <span v-if="activeDirectory && activeDirectory.manifest" style="margin-left: 1rem;">
+        {{ getDirectoryDisplayName(activeDirectory) }}
+        <span v-if="activeDirectory.manifest.description" style="font-size: 0.9rem; margin-left: 0.5rem;">{{ activeDirectory.manifest.description }}</span>
+      </span>
     </div>
 
-    <div v-if="directories.length" class="directories-list">
+    <div v-if="directories.length && !renderComponent">
       <div v-for="(dir, index) in directories" :key="index" class="directory-item"
         :class="{ 'active-directory': activeDirectoryIndex === index }" @click="setActiveDirectory(index)">
         <div class="directory-header">
@@ -103,7 +107,13 @@ function canRenderDirectoryComponent(dir: DirectoryData): boolean {
 
 function getDirectoryDisplayName(dir: DirectoryData): string {
   if (dir.manifest && dir.manifest.name) {
-    return dir.manifest.name
+    let name = dir.manifest.name
+
+    if (dir.manifest.version) {
+      name += ` v${dir.manifest.version}`
+    }
+
+    return name
   }
   return dir.name
 }
@@ -285,10 +295,6 @@ onMounted(async() => {
 .home-container {
   font-family: sans-serif;
   margin: 1rem;
-}
-
-.directories-list {
-  margin: 1rem 0;
 }
 
 .directory-item {
