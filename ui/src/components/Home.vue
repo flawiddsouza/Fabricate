@@ -220,6 +220,10 @@ function setActiveDirectory(index: number) {
 }
 
 async function removeDirectory(index: number) {
+  if (!confirm(`Are you sure you want to remove the directory: ${directories.value[index].name}?`)) {
+    return
+  }
+
   directories.value.splice(index, 1)
 
   if (directories.value.length === 0) {
