@@ -5,11 +5,10 @@
     </div>
 
     <div v-if="directories.length" class="directories-list">
-      <h3>Open Directories:</h3>
       <div v-for="(dir, index) in directories" :key="index" class="directory-item"
         :class="{ 'active-directory': activeDirectoryIndex === index }" @click="setActiveDirectory(index)">
         <div class="directory-header">
-          <span class="directory-name">{{ dir.name }}</span>
+          <span class="directory-name">{{ getDirectoryDisplayName(dir) }}</span>
           <span class="directory-file-count">({{ dir.files.length }} files)</span>
           <button class="remove-directory-btn" @click.stop="removeDirectory(index)">✕</button>
         </div>
@@ -20,11 +19,14 @@
           </button>
         </div>
         <div v-else-if="showDetails && activeDirectoryIndex === index" class="directory-files">
-          <ul>
-            <li v-for="(file, fIndex) in dir.files" :key="fIndex">
-              {{ file.path }} - {{ formatSize(file.file.size) }}
-            </li>
-          </ul>
+          <table>
+            <tbody>
+              <tr v-for="(file, fIndex) in dir.files" :key="fIndex">
+                <td style="padding: 0.1rem;">{{ file.path }}</td>
+                <td style="padding: 0.1rem;">{{ formatSize(file.file.size) }}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -94,6 +96,13 @@ const canRenderComponent = computed(() => {
 })
 
 const shouldRenderComponent = computed(() => renderComponent.value && canRenderComponent.value)
+
+function getDirectoryDisplayName(dir: DirectoryData): string {
+  if (dir.manifest && dir.manifest.name) {
+    return dir.manifest.name
+  }
+  return dir.name
+}
 
 async function saveDirectoryHandles() {
   const handles = directories.value.map(dir => dir.handle)
