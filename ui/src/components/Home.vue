@@ -1,18 +1,24 @@
 <template>
   <div class="home-container" v-if="loaded && !dedicatedMode">
     <div style="margin-bottom: 1rem;">
-      <button @click="handleOpenDirectory">Open Directory</button>
-      <button @click="renderComponent = !renderComponent" v-if="canRenderActiveDirectoryComponent" style="margin-left: 1rem; width: 3rem;">
-        <template v-if="renderComponent">Hide</template>
-        <template v-else>View</template>
-      </button>
+      <div style="display: inline-flex; width: 18rem; overflow: hidden;">
+        <button @click="handleOpenDirectory">Open Directory</button>
+        <button @click="view = !view" v-if="canRenderActiveDirectoryComponent && !edit" style="margin-left: 1rem; width: 3rem;">
+          <template v-if="view">Hide</template>
+          <template v-else>View</template>
+        </button>
+        <button @click="edit = !edit" v-if="canRenderActiveDirectoryComponent && !view" style="margin-left: 1rem; min-width: 3rem;">
+          <template v-if="!edit">Edit</template>
+          <template v-else>Cancel Edit</template>
+        </button>
+      </div>
       <span v-if="activeDirectory && activeDirectory.manifest" style="margin-left: 1rem;">
         {{ getDirectoryDisplayName(activeDirectory) }}
         <span v-if="activeDirectory.manifest.description" style="font-size: 0.9rem; margin-left: 0.5rem;">{{ activeDirectory.manifest.description }}</span>
       </span>
     </div>
 
-    <div v-if="directories.length && !renderComponent">
+    <div v-if="directories.length && !view && !edit">
       <div v-for="(dir, index) in directories" :key="index" class="directory-item"
         :class="{ 'active-directory': activeDirectoryIndex === index }" @click="setActiveDirectory(index)">
         <div class="directory-header">
@@ -48,6 +54,10 @@
     <div v-if="shouldRenderComponent && activeDirectory">
       <FabricateComponent :key="activeDirectoryIndex" :components="activeDirectory.components" :root-component="activeDirectory.manifest.rootComponent" :props="{}" />
     </div>
+
+    <div v-if="edit && activeDirectory">
+      <FabricateEditor :directory="activeDirectory" />
+    </div>
   </div>
   <div v-if="loaded && dedicatedMode && shouldRenderComponent && activeDirectory">
     <FabricateComponent v-if="dedicatedMode" :components="activeDirectory.components" :root-component="activeDirectory.manifest.rootComponent" :props="{}" />
@@ -64,9 +74,10 @@ import {
   getFilesFromDirectory
 } from '../utils/fileSystem'
 import FabricateComponent from './FabricateComponent.vue'
+import FabricateEditor from './FabricateEditor.vue'
 import { get, set } from 'idb-keyval'
 
-interface DirectoryData {
+export interface DirectoryData {
   handle: FileSystemDirectoryHandle
   name: string
   files: FileEntry[]
@@ -81,10 +92,11 @@ interface DirectoryData {
 
 const directories = ref<DirectoryData[]>([])
 const activeDirectoryIndex = ref<number>(-1)
-const renderComponent = ref(false)
+const view = ref(false)
 const dedicatedMode = ref(false)
 const showDetails = ref(true)
 const loaded = ref(false)
+const edit = ref(false)
 
 const activeDirectory = computed(() =>
   activeDirectoryIndex.value >= 0 && activeDirectoryIndex.value < directories.value.length
@@ -99,7 +111,7 @@ const canRenderActiveDirectoryComponent = computed(() => {
   return canRenderDirectoryComponent(activeDirectory.value)
 })
 
-const shouldRenderComponent = computed(() => renderComponent.value && canRenderActiveDirectoryComponent.value)
+const shouldRenderComponent = computed(() => view.value && canRenderActiveDirectoryComponent.value)
 
 function canRenderDirectoryComponent(dir: DirectoryData): boolean {
   return Object.keys(dir.components).length > 0 && Object.keys(dir.manifest).length > 0
@@ -276,7 +288,7 @@ onMounted(async() => {
   await loadDirectoryHandles()
 
   if (document.location.search.includes('dir=')) {
-    renderComponent.value = true
+    view.value = true
     dedicatedMode.value = true
 
     // Parse directory index from URL if available

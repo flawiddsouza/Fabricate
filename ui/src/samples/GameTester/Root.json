@@ -263,22 +263,22 @@
               "default": [
                 {
                   "element": "Player",
-                    "ref": "playerRefs",
-                    "vFor": "i in totalPlayers",
-                    "props": {
-                      "index": "i",
-                      "mode": "mode",
-                      "endpoint": "endpoint",
-                      "matchType": "matchType",
-                      "stakesId": "stakesId",
-                      "tournamentId": "tournamentId",
-                      "tableId": "tableId",
-                      "tablePassword": "tablePassword",
-                      "longitude": "longitude",
-                      "latitude": "latitude",
-                      "webSocketUrl": "webSocketUrl"
-                    },
-                    "children": []
+                  "ref": "playerRefs",
+                  "vFor": "i in totalPlayers",
+                  "props": {
+                    "index": "i",
+                    "mode": "mode",
+                    "endpoint": "endpoint",
+                    "matchType": "matchType",
+                    "stakesId": "stakesId",
+                    "tournamentId": "tournamentId",
+                    "tableId": "tableId",
+                    "tablePassword": "tablePassword",
+                    "longitude": "longitude",
+                    "latitude": "latitude",
+                    "webSocketUrl": "webSocketUrl"
+                  },
+                  "children": []
                 }
               ]
             }

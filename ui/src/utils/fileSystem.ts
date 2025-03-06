@@ -125,7 +125,7 @@ export async function writeFile(fileEntry: FileEntry, content: string): Promise<
  */
 export async function writeFileJSON(fileEntry: FileEntry, content: any): Promise<void> {
   try {
-    await writeFile(fileEntry, JSON.stringify(content, null, 2))
+    await writeFile(fileEntry, JSON.stringify(content, null, 2) + '\n')
   } catch (error) {
     throw new Error(`Error saving JSON changes: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
