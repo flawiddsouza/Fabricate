@@ -12,6 +12,7 @@
           <span class="directory-file-count">({{ dir.files.length }} files)</span>
           <button class="remove-directory-btn" @click.stop="removeDirectory(index)">✕</button>
         </div>
+        <div v-if="dir.manifest && dir.manifest.description" style="margin-top: 0.3rem; font-size: 0.9rem;">{{ dir.manifest.description }}</div>
         <div v-if="dir.requestPermission" class="permission-warning">
           <p>Permission needed to access this directory</p>
           <button @click.stop="requestPermission(index)" class="request-permission-btn">
