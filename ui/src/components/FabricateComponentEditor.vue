@@ -101,18 +101,6 @@ const constantsJson = computed({
   }
 })
 
-const nodesJson = computed({
-  get: () => JSON.stringify(props.modelValue.nodes, null, 2),
-  set: (val) => {
-    try {
-      props.modelValue.nodes = JSON.parse(val)
-      emit('update:modelValue', { ...props.modelValue, nodes: JSON.parse(val) })
-    } catch (e) {
-      console.error('Invalid JSON for nodes', e)
-    }
-  }
-})
-
 watch(() => props.modelValue.name, (newVal) => {
   emit('update:modelValue', { ...props.modelValue, name: newVal })
 })

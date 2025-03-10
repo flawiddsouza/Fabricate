@@ -1,6 +1,9 @@
 <template>
-  <template v-for="node in modelValue">
-    <FabricateComponentNodeEditorNode :modelValue="node" />
+  <template v-for="(node, index) in modelValue" :key="index">
+    <FabricateComponentNodeEditorNode
+      :modelValue="node"
+      @removeNode="modelValue.splice(index, 1)"
+    />
   </template>
 </template>
 

@@ -32,7 +32,7 @@
         </div>
       </div>
       <div v-else>
-        <FabricateComponentEditor v-model="selectedFileJSON" />
+        <FabricateComponentEditor v-model="selectedFileJSON" :key="selectedFile.path" />
       </div>
     </div>
   </div>
@@ -65,6 +65,14 @@ watch(() => selectedFileJSON.value, async() => {
 
     if (selectedFile.value.path === 'manifest.json') {
       props.directory.manifest = selectedFileJSON.value
+    } else {
+      const foundFile = props.directory.parsedFiles.find(parsedFile => parsedFile.file.path === selectedFile.value?.path)
+
+      if (foundFile) {
+        foundFile.content = JSON.parse(JSON.stringify(selectedFileJSON.value))
+
+        props.directory.components[foundFile.content.name] = foundFile.content
+      }
     }
   }
 }, {
