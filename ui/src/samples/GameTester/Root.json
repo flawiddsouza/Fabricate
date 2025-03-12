@@ -128,7 +128,6 @@
                         "children": [
                           {
                             "element": "option",
-                            "value": 1,
                             "text": "Texas Hold'em",
                             ":value": "1"
                           },

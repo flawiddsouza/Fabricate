@@ -162,6 +162,10 @@ const supportedProps: any = {
       label: 'Option Text',
       input: 'input-text'
     },
+    'value': {
+      label: 'Option Value',
+      input: 'input-text'
+    },
     ':value': {
       label: 'Option :Value',
       input: 'input-text'
