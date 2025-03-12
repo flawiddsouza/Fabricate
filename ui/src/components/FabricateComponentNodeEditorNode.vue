@@ -1,117 +1,125 @@
 <template>
   <div class="fabricate-node-container">
     <button class="remove-node" @click="handleRemoveNode">X</button>
-    <div>
-      <label>Element
-        <input
-          type="text"
-          v-model="modelValue.element"
-          list="supported-elements"
-        >
-      </label>
-      <datalist id="supported-elements">
-        <option
-          v-for="element in supportedElements"
-          :value="element"
-        />
-      </datalist>
-    </div>
-    <div>
-      <label>Ref
-        <input
-          type="text"
-          v-model="modelValue.ref"
-          @input="handlePropInput('ref')"
-        >
-      </label>
-    </div>
-    <div>
-      <label>Style
-        <input
-          type="text"
-          v-model="modelValue.style"
-          @input="handlePropInput('style')"
-        >
-      </label>
-    </div>
-    <div>
-      <label>For Each
-        <input
-          type="text"
-          v-model="modelValue.vFor"
-          @input="handlePropInput('vFor')"
-        >
-      </label>
-    </div>
-    <div>
-      <label>If
-        <input
-          type="text"
-          v-model="modelValue.vIf"
-          @input="handlePropInput('vIf')"
-        >
-      </label>
-    </div>
-    <div v-if="modelValue.element === 'input' || modelValue.element === 'select'">
-      <label>Model
-        <input
-          type="text"
-          v-model="modelValue.vModel"
-          @input="handlePropInput('vModel')"
-        >
-      </label>
-    </div>
-    <div v-if="supportedProps[modelValue.element]">
-      <div v-for="prop in Object.keys(supportedProps[modelValue.element])">
-        <label>{{ supportedProps[modelValue.element][prop].label }}
-          <input
-            v-if="supportedProps[modelValue.element][prop].input === 'input-text'"
-            type="text"
-            v-model="modelValue[prop]"
-            @input="handlePropInput(prop)"
-          >
-        </label>
-      </div>
-    </div>
-    <div v-if="modelValue.element === 'button' || (modelValue.element === 'form' && modelValue.on)">
-      <div v-for="handlerName in Object.keys(modelValue.on || {})" :key="handlerName" style="margin-top: 0.5rem;">
-        <label>Event
+    <button class="expand-collapse-button" @click="toggleCollapsed">
+      {{ collapsed ? '+' : '–' }}
+    </button>
+    <div v-if="!collapsed">
+      <div>
+        <label>Element
           <input
             type="text"
-            v-model="handlerNames[handlerName]"
-            @blur="renameEventHandler(handlerName, handlerNames[handlerName])"
+            v-model="modelValue.element"
+            list="supported-elements"
           >
         </label>
-        <label style="margin-left: 0.5rem;">Expression
-          <input
-            type="text"
-            v-model="modelValue.on[handlerName]"
-          >
-        </label>
-        <button @click="removeEventHandler(handlerName)" style="margin-left: 0.5rem;">Remove</button>
-      </div>
-      <button @click="addEventHandler" style="margin-top: 0.5rem;">Add Event Handler</button>
-    </div>
-    <div v-if="slotStructure[modelValue.element]">
-      <div v-for="slot in slotStructure[modelValue.element]" style="margin-top: 0.5rem;">
-        <div>Slot: {{ slot }}</div>
-        <template v-for="(slotItem, slotItemIndex) in modelValue.slots[slot]" :key="slotItemIndex">
-          <FabricateComponentNodeEditorNode
-            :modelValue="slotItem"
-            @removeNode="removeSlotChildNode(slot, slotItemIndex)"
+        <datalist id="supported-elements">
+          <option
+            v-for="element in supportedElements"
+            :value="element"
           />
-        </template>
-        <button @click="handleAddNodeSlot(slot)" style="margin-top: 0.5rem;">Add Node</button>
+        </datalist>
+      </div>
+      <div>
+        <label>Ref
+          <input
+            type="text"
+            v-model="modelValue.ref"
+            @input="handlePropInput('ref')"
+          >
+        </label>
+      </div>
+      <div>
+        <label>Style
+          <input
+            type="text"
+            v-model="modelValue.style"
+            @input="handlePropInput('style')"
+          >
+        </label>
+      </div>
+      <div>
+        <label>For Each
+          <input
+            type="text"
+            v-model="modelValue.vFor"
+            @input="handlePropInput('vFor')"
+          >
+        </label>
+      </div>
+      <div>
+        <label>If
+          <input
+            type="text"
+            v-model="modelValue.vIf"
+            @input="handlePropInput('vIf')"
+          >
+        </label>
+      </div>
+      <div v-if="modelValue.element === 'input' || modelValue.element === 'select'">
+        <label>Model
+          <input
+            type="text"
+            v-model="modelValue.vModel"
+            @input="handlePropInput('vModel')"
+          >
+        </label>
+      </div>
+      <div v-if="supportedProps[modelValue.element]">
+        <div v-for="prop in Object.keys(supportedProps[modelValue.element])">
+          <label>{{ supportedProps[modelValue.element][prop].label }}
+            <input
+              v-if="supportedProps[modelValue.element][prop].input === 'input-text'"
+              type="text"
+              v-model="modelValue[prop]"
+              @input="handlePropInput(prop)"
+            >
+          </label>
+        </div>
+      </div>
+      <div v-if="modelValue.element === 'button' || (modelValue.element === 'form' && modelValue.on)">
+        <div v-for="handlerName in Object.keys(modelValue.on || {})" :key="handlerName" style="margin-top: 0.5rem;">
+          <label>Event
+            <input
+              type="text"
+              v-model="handlerNames[handlerName]"
+              @blur="renameEventHandler(handlerName, handlerNames[handlerName])"
+            >
+          </label>
+          <label style="margin-left: 0.5rem;">Expression
+            <input
+              type="text"
+              v-model="modelValue.on[handlerName]"
+            >
+          </label>
+          <button @click="removeEventHandler(handlerName)" style="margin-left: 0.5rem;">Remove</button>
+        </div>
+        <button @click="addEventHandler" style="margin-top: 0.5rem;">Add Event Handler</button>
+      </div>
+      <div v-if="slotStructure[modelValue.element]">
+        <div v-for="slot in slotStructure[modelValue.element]" style="margin-top: 0.5rem;">
+          <div>Slot: {{ slot }}</div>
+          <template v-for="(slotItem, slotItemIndex) in modelValue.slots[slot]" :key="slotItemIndex">
+            <FabricateComponentNodeEditorNode
+              :modelValue="slotItem"
+              @removeNode="removeSlotChildNode(slot, slotItemIndex)"
+            />
+          </template>
+          <button @click="handleAddNodeSlot(slot)" style="margin-top: 0.5rem;">Add Node</button>
+        </div>
+      </div>
+      <template v-for="(node, idx) in modelValue.children" :key="idx">
+        <FabricateComponentNodeEditorNode
+          :modelValue="node"
+          @removeNode="removeChildNode(idx)"
+        />
+      </template>
+      <div style="margin-top: 0.5rem;" v-if="!addNodeDisallowed.includes(modelValue.element)">
+        <button @click="handleAddNode">Add Node</button>
       </div>
     </div>
-    <template v-for="(node, idx) in modelValue.children" :key="idx">
-      <FabricateComponentNodeEditorNode
-        :modelValue="node"
-        @removeNode="removeChildNode(idx)"
-      />
-    </template>
-    <div style="margin-top: 0.5rem;" v-if="!addNodeDisallowed.includes(modelValue.element)">
-      <button @click="handleAddNode">Add Node</button>
+    <div v-else style="font-style: italic; margin-top: 1rem;">
+      Collapsed: {{ modelValue.element }}
     </div>
   </div>
 </template>
@@ -207,6 +215,8 @@ const slotStructure: any = {
 
 const handlerNames = ref<any>({})
 
+const collapsed = ref(true)
+
 onMounted(() => {
   if (props.modelValue.on) {
     for (const name in props.modelValue.on) {
@@ -281,6 +291,10 @@ function handleAddNodeSlot(slotName: string) {
     children: []
   })
 }
+
+function toggleCollapsed() {
+  collapsed.value = !collapsed.value
+}
 </script>
 
 <style scoped>
@@ -318,5 +332,17 @@ input:focus {
   border: none;
   cursor: pointer;
   padding: 0.2rem 0.4rem;
+}
+
+.expand-collapse-button {
+  position: absolute;
+  top: 0;
+  right: 2rem;
+  background-color: #0078d4;
+  color: #fff;
+  border: none;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  cursor: pointer;
 }
 </style>
