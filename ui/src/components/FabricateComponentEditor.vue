@@ -36,9 +36,21 @@
 
     <div v-else-if="activeTab === 'computed'">
       <div style="margin-top: 1rem;">
-        <label>Computed (JSON)<br>
-          <textarea v-model="computedJson"></textarea>
-        </label>
+        <div v-for="entry in computedKeys" :key="entry.oldKey" style="margin-top: 1rem;">
+          <label>Property
+            <input
+              type="text"
+              v-model="entry.label"
+              @input="renameComputed(entry.oldKey, entry.label)"
+            />
+          </label>
+          <div style="margin-top: 0.5rem;">
+            <label>Script</label><br>
+            <textarea v-model="modelValue.computed[entry.oldKey]" rows="5"></textarea>
+          </div>
+          <button @click="removeComputed(entry.oldKey)" style="margin-top: 0.5rem;">Remove</button>
+        </div>
+        <button @click="addComputed" style="margin-top: 0.5rem;">Add Computed</button>
       </div>
     </div>
 
@@ -68,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import { watch, computed, ref } from 'vue'
+import { watch, computed, ref, onMounted } from 'vue'
 import FabricateComponentNodeEditor from './FabricateComponentNodeEditor.vue'
 
 const props = defineProps<{
@@ -103,17 +115,58 @@ const propsJson = computed({
   }
 })
 
-const computedJson = computed({
-  get: () => JSON.stringify(props.modelValue.computed, null, 2),
-  set: (val) => {
-    try {
-      props.modelValue.computed = JSON.parse(val)
-      emit('update:modelValue', { ...props.modelValue, computed: JSON.parse(val) })
-    } catch (e) {
-      console.error('Invalid JSON for computed', e)
-    }
+type ComputedEntry = { oldKey: string; label: string }
+const computedKeys = ref<ComputedEntry[]>([])
+
+onMounted(() => {
+  for (const k in props.modelValue.computed) {
+    computedKeys.value.push({ oldKey: k, label: k })
   }
 })
+
+const skipComputedKeysWatch = ref(false)
+
+watch(() => props.modelValue.computed, (newVal) => {
+  if (skipComputedKeysWatch.value) {
+    return
+  }
+
+  computedKeys.value = []
+
+  for (const k in newVal) {
+    computedKeys.value.push({ oldKey: k, label: k })
+  }
+}, { immediate: true })
+
+function renameComputed(oldKey: string, newKey: string) {
+  if (newKey && newKey !== oldKey) {
+    skipComputedKeysWatch.value = true
+    props.modelValue.computed[newKey] = props.modelValue.computed[oldKey]
+    delete props.modelValue.computed[oldKey]
+    const entry = computedKeys.value.find(e => e.oldKey === oldKey)
+    if (entry) entry.oldKey = newKey
+    skipComputedKeysWatch.value = false
+  }
+}
+
+function removeComputed(key: string) {
+  if (!confirm('Are you sure you want to remove this computed property?')) {
+    return
+  }
+
+  delete props.modelValue.computed[key]
+  computedKeys.value = computedKeys.value.filter(e => e.oldKey !== key)
+}
+
+function addComputed() {
+  let newKey = 'newComputed'
+  let i = 1
+  while (props.modelValue.computed[newKey]) {
+    newKey = `newComputed${i++}`
+  }
+  props.modelValue.computed[newKey] = ''
+  computedKeys.value.push({ oldKey: newKey, label: newKey })
+}
 
 const constantsJson = computed({
   get: () => JSON.stringify(props.modelValue.Constants, null, 2),
