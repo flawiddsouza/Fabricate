@@ -56,6 +56,9 @@
           >
         </label>
       </div>
+      <div v-if="modelValue.props">
+        Props: {{ modelValue.props }}
+      </div>
       <div v-if="modelValue.element === 'input' || modelValue.element === 'select'">
         <label>Model
           <input
@@ -237,8 +240,7 @@ function handleAddNode() {
     props.modelValue.children = []
   }
   props.modelValue.children.push({
-    element: 'div',
-    children: []
+    element: 'div'
   })
 }
 
@@ -250,9 +252,6 @@ function handleRemoveNode() {
 }
 
 function removeChildNode(index: number) {
-  if (!confirm('Are you sure you want to remove this node?')) {
-    return
-  }
   props.modelValue.children.splice(index, 1)
 }
 
@@ -296,8 +295,7 @@ function renameEventHandler(oldName: string, newName: string) {
 
 function handleAddNodeSlot(slotName: string) {
   props.modelValue.slots[slotName].push({
-    element: 'div',
-    children: []
+    element: 'div'
   })
 }
 

@@ -23,6 +23,7 @@
         <label>Props (JSON)<br>
           <textarea v-model="propsJson"></textarea>
         </label>
+        <button @click="savePropsJson" style="margin-top: 0.5rem;">Save Props</button>
       </div>
     </div>
 
@@ -31,6 +32,7 @@
         <label>Variables (JSON)<br>
           <textarea v-model="variablesJson"></textarea>
         </label>
+        <button @click="saveVariablesJson" style="margin-top: 0.5rem;">Save Variables</button>
       </div>
     </div>
 
@@ -41,9 +43,9 @@
             <input
               type="text"
               v-model="entry.label"
-              @input="renameComputed(entry.oldKey, entry.label)"
             />
           </label>
+          <button @click="renameComputed(entry.oldKey, entry.label)" style="margin-left: 0.5rem;">Rename</button>
           <div style="margin-top: 0.5rem;">
             <label>Script</label><br>
             <textarea v-model="modelValue.computed[entry.oldKey]" rows="5"></textarea>
@@ -91,29 +93,34 @@ const emit = defineEmits(['update:modelValue'])
 
 const activeTab = ref('name')
 
-const variablesJson = computed({
-  get: () => JSON.stringify(props.modelValue.variables, null, 2),
-  set: (val) => {
-    try {
-      props.modelValue.variables = JSON.parse(val)
-      emit('update:modelValue', { ...props.modelValue, variables: JSON.parse(val) })
-    } catch (e) {
-      console.error('Invalid JSON for variables', e)
-    }
-  }
-})
+const variablesJson = ref(JSON.stringify(props.modelValue.variables, null, 2))
+const propsJson = ref(JSON.stringify(props.modelValue.props, null, 2))
 
-const propsJson = computed({
-  get: () => JSON.stringify(props.modelValue.props, null, 2),
-  set: (val) => {
-    try {
-      props.modelValue.props = JSON.parse(val)
-      emit('update:modelValue', { ...props.modelValue, props: JSON.parse(val) })
-    } catch (e) {
-      console.error('Invalid JSON for props', e)
-    }
+watch(() => props.modelValue.variables, (newVal) => {
+  variablesJson.value = JSON.stringify(newVal, null, 2)
+}, { deep: true })
+
+watch(() => props.modelValue.props, (newVal) => {
+  propsJson.value = JSON.stringify(newVal, null, 2)
+}, { deep: true })
+
+function saveVariablesJson() {
+  try {
+    props.modelValue.variables = JSON.parse(variablesJson.value)
+    emit('update:modelValue', { ...props.modelValue, variables: JSON.parse(variablesJson.value) })
+  } catch (e) {
+    console.error('Invalid JSON for variables', e)
   }
-})
+}
+
+function savePropsJson() {
+  try {
+    props.modelValue.props = JSON.parse(propsJson.value)
+    emit('update:modelValue', { ...props.modelValue, props: JSON.parse(propsJson.value) })
+  } catch (e) {
+    console.error('Invalid JSON for props', e)
+  }
+}
 
 type ComputedEntry = { oldKey: string; label: string }
 const computedKeys = ref<ComputedEntry[]>([])
@@ -159,6 +166,10 @@ function removeComputed(key: string) {
 }
 
 function addComputed() {
+  if (!props.modelValue.computed) {
+    props.modelValue.computed = {}
+  }
+
   let newKey = 'newComputed'
   let i = 1
   while (props.modelValue.computed[newKey]) {
@@ -185,8 +196,7 @@ function handleAddNode() {
     props.modelValue.nodes = []
   }
   props.modelValue.nodes.push({
-    element: 'div',
-    children: []
+    element: 'div'
   })
   emit('update:modelValue', { ...props.modelValue })
 }

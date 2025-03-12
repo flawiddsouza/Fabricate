@@ -5,7 +5,8 @@
     "mode": "Endpoint",
     "endpoint": "",
     "matchType": 1,
-    "stakesId": 1,
+    "selectedStakeType": 1,
+    "customStakesId": 0,
     "tournamentId": 0,
     "tableId": 0,
     "tablePassword": "",
@@ -122,15 +123,29 @@
                     "children": [
                       {
                         "element": "select",
-                        "vModel": "stakesId",
+                        "vModel": "selectedStakeType",
                         "required": true,
                         "children": [
                           {
                             "element": "option",
                             "value": 1,
-                            "text": "Texas Hold'em"
+                            "text": "Texas Hold'em",
+                            ":value": "1"
+                          },
+                          {
+                            "element": "option",
+                            "children": [],
+                            "text": "Custom",
+                            ":value": "0"
                           }
                         ]
+                      },
+                      {
+                        "element": "input",
+                        "vIf": "selectedStakeType == 0",
+                        "vModel": "customStakesId",
+                        "type": "number",
+                        "placeholder": "Enter custom Stakes ID"
                       }
                     ]
                   },
@@ -288,5 +303,8 @@
       "children": []
     }
   ],
-  "script": "function start() {\n playerRefs.value?.forEach((player) => {\n    player.start()\n  })\n}\n\ndefineMethods({ start })"
+  "script": "function start() {\n playerRefs.value?.forEach((player) => {\n    player.start()\n  })\n}\n\ndefineMethods({ start })",
+  "computed": {
+    "stakesIds": "return vars.selectedStakeType.value == 0 ? vars.customStakesId.value : vars.selectedStakeType.value"
+  }
 }
