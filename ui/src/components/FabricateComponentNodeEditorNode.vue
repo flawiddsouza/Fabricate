@@ -243,14 +243,23 @@ function handleAddNode() {
 }
 
 function handleRemoveNode() {
+  if (!confirm('Are you sure you want to remove this node?')) {
+    return
+  }
   emit('removeNode')
 }
 
 function removeChildNode(index: number) {
+  if (!confirm('Are you sure you want to remove this node?')) {
+    return
+  }
   props.modelValue.children.splice(index, 1)
 }
 
 function removeSlotChildNode(slotName: string, index: number) {
+  if (!confirm('Are you sure you want to remove this node?')) {
+    return
+  }
   props.modelValue.slots[slotName].splice(index, 1)
 }
 
