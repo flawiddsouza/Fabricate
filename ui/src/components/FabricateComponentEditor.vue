@@ -8,25 +8,25 @@
 
     <div style="margin-top: 1rem;">
       <label>Props (JSON)<br>
-        <textarea v-model="propsJson" style="width: 100%; height: 100px;"></textarea>
+        <textarea v-model="propsJson"></textarea>
       </label>
     </div>
 
     <div style="margin-top: 1rem;">
       <label>Variables (JSON)<br>
-        <textarea v-model="variablesJson" style="width: 100%; height: 200px;"></textarea>
+        <textarea v-model="variablesJson"></textarea>
       </label>
     </div>
 
     <div style="margin-top: 1rem;">
       <label>Computed (JSON)<br>
-        <textarea v-model="computedJson" style="width: 100%; height: 100px;"></textarea>
+        <textarea v-model="computedJson"></textarea>
       </label>
     </div>
 
     <div style="margin-top: 1rem;">
       <label>Constants (JSON)<br>
-        <textarea v-model="constantsJson" style="width: 100%; height: 100px;"></textarea>
+        <textarea v-model="constantsJson"></textarea>
       </label>
     </div>
 
@@ -38,7 +38,7 @@
 
     <div style="margin-top: 1rem;">
       <label>Script<br>
-        <textarea v-model="modelValue.script" style="width: 100%; height: 200px;"></textarea>
+        <textarea v-model="modelValue.script"></textarea>
       </label>
     </div>
   </div>
@@ -122,3 +122,11 @@ watch(() => props.modelValue.script, (newVal) => {
 })
 </script>
 
+<style scoped>
+textarea {
+  width: 100%;
+  height: 15rem;
+  font-family: monospace;
+  resize: vertical;
+}
+</style>
