@@ -33,6 +33,7 @@
     <div style="margin-top: 1rem;">
       <div><label>Nodes</label></div>
       <FabricateComponentNodeEditor v-model="modelValue.nodes" />
+      <button @click="handleAddNode">Add node</button>
     </div>
 
     <div style="margin-top: 1rem;">
@@ -100,6 +101,17 @@ const constantsJson = computed({
     }
   }
 })
+
+function handleAddNode() {
+  if (!props.modelValue.nodes) {
+    props.modelValue.nodes = []
+  }
+  props.modelValue.nodes.push({
+    element: 'div',
+    children: []
+  })
+  emit('update:modelValue', { ...props.modelValue })
+}
 
 watch(() => props.modelValue.name, (newVal) => {
   emit('update:modelValue', { ...props.modelValue, name: newVal })
