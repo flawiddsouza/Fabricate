@@ -56,8 +56,12 @@
           >
         </label>
       </div>
-      <div v-if="modelValue.props">
-        Props: {{ modelValue.props }}
+      <div>
+        <label>Props (JSON)<br>
+          <textarea v-model="propsJson" class="props-json"></textarea>
+        </label>
+        <button @click="savePropsJson" style="margin-top: 0.5rem;">Save Props</button>
+        <div v-if="propsJsonError" class="error-message">{{ propsJsonError }}</div>
       </div>
       <div v-if="modelValue.element === 'input' || modelValue.element === 'select'">
         <label>Model
@@ -128,7 +132,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import FabricateComponentNodeEditorNode from './FabricateComponentNodeEditorNode.vue'
 
 const props = defineProps<{
@@ -220,13 +224,28 @@ const handlerNames = ref<any>({})
 
 const collapsed = ref(true)
 
+const propsJson = ref('')
+const propsJsonError = ref('')
+
 onMounted(() => {
   if (props.modelValue.on) {
     for (const name in props.modelValue.on) {
       handlerNames.value[name] = name
     }
   }
+
+  if (props.modelValue.props) {
+    propsJson.value = JSON.stringify(props.modelValue.props, null, 2)
+  }
 })
+
+watch(() => props.modelValue.props, (newVal) => {
+  if (newVal) {
+    propsJson.value = JSON.stringify(newVal, null, 2)
+  } else {
+    propsJson.value = ''
+  }
+}, { deep: true })
 
 function handlePropInput(prop: string) {
   // Remove prop if empty
@@ -302,6 +321,22 @@ function handleAddNodeSlot(slotName: string) {
 function toggleCollapsed() {
   collapsed.value = !collapsed.value
 }
+
+function savePropsJson() {
+  try {
+    if (propsJson.value === '') {
+      delete props.modelValue.props
+      return
+    }
+
+    const parsed = JSON.parse(propsJson.value)
+    props.modelValue.props = parsed
+    propsJsonError.value = ''
+  } catch (e) {
+    propsJsonError.value = 'Invalid JSON format'
+    console.error('Invalid JSON for props', e)
+  }
+}
 </script>
 
 <style scoped>
@@ -351,5 +386,18 @@ input:focus {
   padding: 0.2rem 0.4rem;
   border-radius: 4px;
   cursor: pointer;
+}
+
+.props-json {
+  width: 100%;
+  height: 100px;
+  font-family: monospace;
+  resize: vertical;
+}
+
+.error-message {
+  color: red;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
 }
 </style>
