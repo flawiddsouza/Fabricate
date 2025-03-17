@@ -146,7 +146,7 @@
       </div>
     </div>
 
-    <div v-else class="collapsed-info">
+    <div v-else class="collapsed-info" @click="toggleCollapsed">
       <span v-if="modelValue.text" class="collapsed-text">"{{ truncateText(modelValue.text, 20) }}"</span>
       <span v-if="hasChildren" class="collapsed-children-count">({{ childrenCount }} {{ childrenCount === 1 ? 'child' : 'children' }})</span>
     </div>
@@ -534,6 +534,7 @@ input:focus, textarea:focus, select:focus {
   color: #777;
   display: flex;
   gap: 0.5rem;
+  cursor: pointer; /* Add cursor pointer to indicate it's clickable */
 }
 
 .collapsed-text {
