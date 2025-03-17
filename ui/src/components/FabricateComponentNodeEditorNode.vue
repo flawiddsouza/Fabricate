@@ -1,12 +1,12 @@
 <template>
   <div class="fabricate-node-container" :class="[`depth-${depth}`, { 'is-collapsed': collapsed }]">
-    <div class="node-header">
+    <div class="node-header" @click="toggleCollapsed">
       <span class="node-type">{{ modelValue.element || 'Node' }}</span>
       <div class="node-controls">
-        <button class="expand-collapse-button" @click="toggleCollapsed">
+        <button class="expand-collapse-button" @click.stop="toggleCollapsed">
           {{ collapsed ? '+' : '–' }}
         </button>
-        <button class="remove-node" @click="handleRemoveNode">✕</button>
+        <button class="remove-node" @click.stop="handleRemoveNode">✕</button>
       </div>
     </div>
 
@@ -408,6 +408,7 @@ function truncateText(text: string, maxLength: number): string {
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid #ddd;
+  cursor: pointer;
 }
 
 .node-type {
