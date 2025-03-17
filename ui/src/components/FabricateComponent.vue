@@ -159,6 +159,7 @@ const Renderer = defineComponent({
                 subProps[key] = new Function('vars', `with(vars){ return ${val}; }`)(varsExtended)
               } catch {
                 subProps[key] = `!![Could not resolve: ${val}]!!`
+                console.warn(`${element}: Could not resolve prop value: ${val}`)
               }
             } else {
               subProps[key] = val
