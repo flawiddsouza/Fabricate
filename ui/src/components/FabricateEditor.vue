@@ -7,6 +7,7 @@
           {{ file.path }}
         </option>
       </select>
+      <button @click="addComponent" style="margin-left: 0.5rem;">Add Component</button>
     </div>
     <div v-if="selectedFile && selectedFileJSON" style="margin-top: 1rem">
       <div v-if="selectedFile.path === 'manifest.json'">
@@ -78,6 +79,23 @@ watch(() => selectedFileJSON.value, async() => {
 }, {
   deep: true
 })
+
+async function addComponent() {
+  if (!props.directory.createComponent) return
+
+  const name = prompt('Enter component name:')
+  if (!name) return
+
+  const success = await props.directory.createComponent(name)
+  if (success) {
+    alert(`Component "${name}" created successfully!`)
+    // Select the newly created component in the editor
+    const newFile = props.directory.files.find(file => file.path === `${name}.json`)
+    if (newFile) {
+      selectedFile.value = newFile
+    }
+  }
+}
 
 onMounted(() => {
   selectedFile.value = props.directory.files.find(file => file.path === 'manifest.json') || null

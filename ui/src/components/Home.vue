@@ -71,7 +71,8 @@ import {
   formatSize,
   type FileEntry,
   readFileJSON,
-  getFilesFromDirectory
+  getFilesFromDirectory,
+  writeFileJSON,
 } from '../utils/fileSystem'
 import FabricateComponent from './FabricateComponent.vue'
 import FabricateEditor from './FabricateEditor.vue'
@@ -88,6 +89,7 @@ export interface DirectoryData {
   components: any
   manifest: any
   requestPermission: boolean
+  createComponent?: (name: string, template?: any) => Promise<boolean>
 }
 
 const directories = ref<DirectoryData[]>([])
@@ -200,14 +202,76 @@ async function processDirectory(handle: FileSystemDirectoryHandle): Promise<Dire
     }
   }
 
-  return {
+  const dirData: DirectoryData = {
     handle,
     name: handle.name,
     files,
     parsedFiles,
     components,
     manifest,
-    requestPermission: false
+    requestPermission: false,
+    createComponent: async (name: string, template: any = null) => {
+      return await createComponentInDirectory(dirData, name, template)
+    }
+  }
+
+  return dirData
+}
+
+async function createComponentInDirectory(dirData: DirectoryData, name: string, template: any = null): Promise<boolean> {
+  if (!name) return false
+
+  // Validate component name
+  if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(name)) {
+    alert('Component name must start with a letter and contain only letters, numbers, and underscores')
+    return false
+  }
+
+  // Check if component already exists
+  if (dirData.components[name]) {
+    alert(`Component "${name}" already exists`)
+    return false
+  }
+
+  try {
+    // Create default component structure or use template
+    const componentData = template || {
+      name: name,
+      props: {},
+      variables: {},
+      computed: {},
+      Constants: {},
+      nodes: [
+        { element: 'div', text: `This is ${name} component` }
+      ],
+      script: '// Component script goes here'
+    }
+
+    // Create file in directory
+    const fileHandle = await dirData.handle.getFileHandle(`${name}.json`, { create: true })
+    const file = await fileHandle.getFile()
+    const fileEntry: FileEntry = {
+      path: `${name}.json`,
+      file,
+      handle: fileHandle
+    }
+
+    // Write component data to file
+    await writeFileJSON(fileEntry, componentData)
+
+    // Update directory data
+    dirData.files.push(fileEntry)
+    dirData.parsedFiles.push({ file: fileEntry, content: componentData })
+    dirData.components[name] = componentData
+
+    return true
+  } catch (error) {
+    if (error instanceof Error) {
+      alert(`Failed to create component: ${error.message}`)
+    } else {
+      alert('Failed to create component due to an unknown error')
+    }
+    return false
   }
 }
 
