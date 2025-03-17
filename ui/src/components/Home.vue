@@ -7,7 +7,7 @@
           <template v-if="view">Hide</template>
           <template v-else>View</template>
         </button>
-        <button @click="edit = !edit" v-if="canRenderActiveDirectoryComponent && !view" style="margin-left: 1rem; min-width: 3rem;">
+        <button @click="edit = !edit" v-if="!view" style="margin-left: 1rem; min-width: 3rem;">
           <template v-if="!edit">Edit</template>
           <template v-else>Cancel Edit</template>
         </button>
