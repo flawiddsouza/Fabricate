@@ -1,6 +1,11 @@
 <template>
-  <template v-for="(node, _index) in components[rootComponent].nodes" :key="_index">
-    <Renderer :node="node" />
+  <template v-if="rootComponentValue">
+    <template v-for="(node, _index) in rootComponentValue.nodes" :key="_index">
+      <Renderer :node="node" />
+    </template>
+  </template>
+  <template v-else>
+    <div>{{ rootComponent }} component not found</div>
   </template>
 </template>
 
@@ -25,15 +30,19 @@ const rootProps = defineProps<{
 
 const vars: Record<string, any> = {}
 
-Object.keys(rootProps.components[rootProps.rootComponent].variables).forEach(key => {
-  const value = rootProps.components[rootProps.rootComponent].variables[key]
-  if (typeof value === 'object' && value !== null) {
-    // we need to deep clone the object / array or else same object / array will be shared across all instances
-    vars[key] = ref(JSON.parse(JSON.stringify(value)))
-  } else {
-    vars[key] = ref(value)
-  }
-})
+const rootComponentValue = rootProps.components[rootProps.rootComponent]
+
+if (rootComponentValue) {
+  Object.keys(rootComponentValue.variables).forEach(key => {
+    const value = rootComponentValue.variables[key]
+    if (typeof value === 'object' && value !== null) {
+      // we need to deep clone the object / array or else same object / array will be shared across all instances
+      vars[key] = ref(JSON.parse(JSON.stringify(value)))
+    } else {
+      vars[key] = ref(value)
+    }
+  })
+}
 
 vars.timer = useTimer({
   countDown: true
@@ -68,12 +77,12 @@ function setRef(ref: string, el: any) {
   }
 }
 
-if (rootProps.components[rootProps.rootComponent].computed) {
-  Object.keys(rootProps.components[rootProps.rootComponent].computed).forEach(key => {
+if (rootComponentValue && rootComponentValue.computed) {
+  Object.keys(rootComponentValue.computed).forEach(key => {
     vars[key] = computed(() => {
-      const constants = rootProps.components[rootProps.rootComponent].Constants || {}
+      const constants = rootComponentValue.Constants || {}
       return new Function('vars', 'props', 'Constants',
-        `${rootProps.components[rootProps.rootComponent].computed[key]}`
+        `${rootComponentValue.computed[key]}`
       )(vars, rootProps.props, constants)
     })
   })
@@ -88,12 +97,14 @@ Object.keys(rootProps.props).forEach(key => {
   })
 })
 
-try {
-  new Function('vars', 'props', 'Constants', 'defineMethods', 'defineExpose',
-    `with(vars){ ${rootProps.components[rootProps.rootComponent].script} }`
-  )(vars, rootPropsPropsDeValued, rootProps.components[rootProps.rootComponent].Constants || {}, defineMethods, defineExposeHelper)
-} catch (error) {
-  console.error('Error executing script:', error)
+if (rootComponentValue && rootComponentValue.script) {
+  try {
+    new Function('vars', 'props', 'Constants', 'defineMethods', 'defineExpose',
+      `with(vars){ ${rootComponentValue.script} }`
+    )(vars, rootPropsPropsDeValued, rootComponentValue.Constants || {}, defineMethods, defineExposeHelper)
+  } catch (error) {
+    console.error('Error executing script:', error)
+  }
 }
 
 defineExpose(defineExposeObject.value)
