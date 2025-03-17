@@ -3,7 +3,7 @@
     <div style="margin-bottom: 1rem;">
       <div style="display: inline-flex; width: 18rem; overflow: hidden;">
         <button @click="handleOpenDirectory">Open Directory</button>
-        <button @click="view = !view" v-if="canRenderActiveDirectoryComponent && !edit" style="margin-left: 1rem; width: 3rem;">
+        <button @click="view = !view" v-if="canRenderActiveDirectoryComponent() && !edit" style="margin-left: 1rem; width: 3rem;">
           <template v-if="view">Hide</template>
           <template v-else>View</template>
         </button>
@@ -106,14 +106,14 @@ const activeDirectory = computed(() =>
     : null
 )
 
-const canRenderActiveDirectoryComponent = computed(() => {
+const canRenderActiveDirectoryComponent = () => {
   if (!activeDirectory.value) {
     return false
   }
   return canRenderDirectoryComponent(activeDirectory.value)
-})
+}
 
-const shouldRenderComponent = computed(() => view.value && canRenderActiveDirectoryComponent.value)
+const shouldRenderComponent = computed(() => view.value && canRenderActiveDirectoryComponent())
 
 function canRenderDirectoryComponent(dir: DirectoryData): boolean {
   return Object.keys(dir.components).length > 0 && Object.keys(dir.manifest).length > 0
