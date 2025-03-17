@@ -8,6 +8,11 @@
         </option>
       </select>
       <button @click="addComponent" style="margin-left: 0.5rem;">Add Component</button>
+      <button
+        style="margin-left: 0.5rem;"
+        @click="deleteComponent"
+        :disabled="!selectedFile || selectedFile.path === 'manifest.json'"
+      >Delete Component</button>
     </div>
     <div v-if="selectedFile && selectedFileJSON" style="margin-top: 1rem">
       <div v-if="selectedFile.path === 'manifest.json'">
@@ -94,6 +99,37 @@ async function addComponent() {
     if (newFile) {
       selectedFile.value = newFile
     }
+  }
+}
+
+async function deleteComponent() {
+  if (!selectedFile.value || selectedFile.value.path === 'manifest.json') return
+
+  const componentName = selectedFile.value.path.replace('.json', '')
+
+  if (!confirm(`Are you sure you want to delete the component "${componentName}"? This cannot be undone.`)) {
+    return
+  }
+
+  try {
+    // Delete the file from the filesystem
+    await selectedFile.value.handle.remove()
+
+    // Remove the component from our data structures
+    props.directory.files = props.directory.files.filter(f => f.path !== selectedFile.value?.path)
+    props.directory.parsedFiles = props.directory.parsedFiles.filter(pf => pf.file.path !== selectedFile.value?.path)
+
+    if (selectedFileJSON.value && selectedFileJSON.value.name) {
+      delete props.directory.components[selectedFileJSON.value.name]
+    }
+
+    // Reset selection if needed
+    selectedFile.value = props.directory.files.find(file => file.path === 'manifest.json') || null
+    selectedFileJSON.value = selectedFile.value ? await readFileJSON(selectedFile.value) : null
+
+    alert(`Component "${componentName}" deleted successfully!`)
+  } catch (error) {
+    alert(`Error deleting component: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
 
