@@ -304,6 +304,6 @@
   ],
   "script": "function start() {\n playerRefs.value?.forEach((player) => {\n    player.start()\n  })\n}\n\ndefineMethods({ start })",
   "computed": {
-    "stakesIds": "return vars.selectedStakeType.value == 0 ? vars.customStakesId.value : vars.selectedStakeType.value"
+    "stakesId": "return vars.selectedStakeType.value == 0 ? vars.customStakesId.value : vars.selectedStakeType.value"
   }
 }
